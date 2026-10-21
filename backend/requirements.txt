@@ -1,0 +1,31 @@
+# Web framework
+fastapi==0.136.1
+uvicorn==0.46.0
+python-multipart==0.0.28
+
+# Config / validation
+python-dotenv==1.2.2
+pydantic==2.13.4
+typing-extensions==4.15.0
+
+# LangChain / LangGraph stack
+langchain-core==1.4.0
+langchain-google-genai==4.2.2
+langchain-groq==1.1.2
+langgraph==1.2.0
+
+# Data + survival analysis
+numpy==2.4.4
+pandas==2.3.3
+duckdb==1.5.2
+lifelines==0.30.3
+scipy==1.18.1
+
+# RAG vector store
+chromadb==1.5.9
+
+# Background job orchestration
+inngest==0.5.18
+
+# Observability (optional at runtime — only active when LANGFUSE_* keys are set)
+langfuse==5.0.4

@@ -1,0 +1,38 @@
+# OS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+Network\ Trash\ Folder
+Temporary\ Items
+.apdisk
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# AI agent / coding assistant config (not for repo)
+.claude/
+CLAUDE.md
+AGENTS.md
+TASKS.md
+.agents/
+
+# Personal notes
+learn/
+
+# Dev test files
+test_upload.py
+test_*.py
+
+# Large raw datasets
+*.csv
+!backend/data/

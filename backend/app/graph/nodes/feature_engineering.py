@@ -1,0 +1,201 @@
+"""
+Node 3: Feature Engineering
+=============================
+Action:  Compute RFM, LTV, Velocity metrics
+Tools:   Pandas, NumPy
+Adds:    feature_store
+"""
+
+from __future__ import annotations
+
+import duckdb
+import numpy as np
+from app.graph.state import RetentionGraphState
+from app.graph.utils import get_churn_column
+from app.stats import benjamini_hochberg, multiple_testing_mode
+from app.stats.survival import fit_cox
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="lifelines")
+
+
+def feature_engineering_node(state: RetentionGraphState) -> dict:
+    """Engineer retention-relevant features: RFM, LTV, velocity."""
+    try:
+        raw_csv_path = state.get("raw_csv_path", "")
+        conn = duckdb.connect(":memory:")
+        df = conn.execute(f"SELECT * FROM read_csv_auto('{raw_csv_path}')").df()
+
+        feature_store = {
+            "rfm_scores": {},
+            "ltv_estimates": {},
+            "velocity_metrics": {},
+            "engagement_cohorts": {},
+            "feature_count": 0,
+            "feature_list": [],
+        }
+
+
+        # Resolve detected columns from input_ingest state
+        input_context = state.get("input_context", {})
+        detected = input_context.get("detected_columns", {})
+        numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+
+        tenure_col = detected.get("tenure") or next((c for c in df.columns if any(x in c.lower() for x in ['month', 'tenure'])), None)
+        usage_col = detected.get("usage") or next((c for c in df.columns if any(x in c.lower() for x in ['login', 'usage'])), None)
+        ltv_col = next((c for c in df.columns if any(x in c.lower() for x in ['ltv', 'revenue', 'monetary', 'value'])), None)
+
+        # 1. RFM Scores using semantically correct columns
+        rfm_map = {"recency": tenure_col, "frequency": usage_col, "monetary": ltv_col}
+        for label, col in rfm_map.items():
+            if col and col in df.columns:
+                try:
+                    col_data = df[col].dropna()
+                    col_std = float(col_data.std())
+                    if col_std > 0:
+                        feature_store["rfm_scores"][f"{label}_zscore"] = {
+                            "column": col,
+                            "mean": round(float(col_data.mean()), 3),
+                            "std": round(col_std, 3),
+                        }
+                except:
+                    pass
+
+        # 2. Engagement velocity (avg logins per month vs population mean)
+        if usage_col and usage_col in df.columns:
+            try:
+                usage_data = df[usage_col].dropna()
+                feature_store["velocity_metrics"]["avg_logins_per_month"] = round(float(usage_data.mean()), 2)
+                feature_store["velocity_metrics"]["logins_std"] = round(float(usage_data.std()), 2)
+                feature_store["velocity_metrics"]["low_engagement_threshold"] = round(float(usage_data.quantile(0.25)), 2)
+            except:
+                pass
+
+        # 3. LTV estimates from actual LTV column
+        if ltv_col and ltv_col in df.columns:
+            try:
+                ltv_data = df[ltv_col].dropna()
+                feature_store["ltv_estimates"]["mean_ltv"] = round(float(ltv_data.mean()), 2)
+                feature_store["ltv_estimates"]["median_ltv"] = round(float(ltv_data.median()), 2)
+                feature_store["ltv_estimates"]["ltv_col"] = ltv_col
+            except:
+                pass
+
+        # 4. Engagement cohorts split by logins (actual engagement signal)
+        if usage_col and usage_col in df.columns:
+            try:
+                col_percentiles = df[usage_col].quantile([0.25, 0.5, 0.75]).to_dict()
+                feature_store["engagement_cohorts"] = {
+                    "low": float(col_percentiles.get(0.25, 0)),
+                    "medium": float(col_percentiles.get(0.5, 0)),
+                    "high": float(col_percentiles.get(0.75, 0)),
+                    "column": usage_col,
+                }
+            except:
+                pass
+
+        # 5. Predictive Churn Modeling (Survival Analysis - CoxPH)
+        try:
+            churn_col = detected.get("churn") or get_churn_column(df)
+            if churn_col and tenure_col and numeric_cols:
+                # Shared model builder (app/stats/survival.py): numeric covariates
+                # minus ids / near-unique columns, low-cardinality categoricals
+                # one-hot encoded as "Column=Value", rows with NaN dropped.
+                model = fit_cox(df, churn_col, tenure_col, detected.get("customer_id"))
+                if model is not None:
+                    cph = model.cph
+                    df_ml = model.frame
+                    features = model.features
+
+                    # Predict for active users (where churn == 0)
+                    active_users = df_ml[df_ml[churn_col] == 0]
+                    if not active_users.empty:
+                        # Extract the features for prediction
+                        X_active = active_users[features]
+
+                        # Predict median survival time for active users
+                        # If a user's risk is so low they outlive the model, it returns inf.
+                        median_survival_times = cph.predict_median(X_active)
+
+                        # A user is "high risk" if their expected remaining median survival time is < 6 periods
+                        current_tenures = active_users[tenure_col]
+                        expected_remaining_time = median_survival_times - current_tenures
+
+                        # Count those whose expected remaining time is very low (< 6 units)
+                        high_risk_indices = np.where(expected_remaining_time < 6)[0]
+                        high_risk_count = int(len(high_risk_indices))
+
+                        # Identify the lowest predicted survival time
+                        # Ignore -inf or inf
+                        valid_remaining = expected_remaining_time[np.isfinite(expected_remaining_time)]
+                        lowest_remaining_time = float(np.min(valid_remaining)) if len(valid_remaining) > 0 else 999.0
+
+                        # Extract per-feature hazard ratios — the strongest driver signal CoxPH provides.
+                        # exp(coef) > 1 means the feature increases churn hazard; < 1 means it protects.
+                        try:
+                            summary_df = cph.summary.copy()
+                            # BH-correct across every covariate the model tested, not
+                            # just the top 5 we surface — otherwise the correction is
+                            # cosmetic.
+                            mode = multiple_testing_mode()
+                            summary_df["p_adj"] = benjamini_hochberg(
+                                [float(p) for p in summary_df["p"].tolist()]
+                            )
+                            # Rank by |z| (coef / se), not |coef|: a raw coefficient
+                            # depends on the feature's units, so per-unit features
+                            # (logins, tickets) used to lose their top-5 slot to
+                            # insignificant 0/1 dummies. The eval harness caught this.
+                            if "z" in summary_df.columns:
+                                summary_df["rank_key"] = np.abs(summary_df["z"])
+                            else:
+                                summary_df["rank_key"] = np.abs(summary_df["coef"])
+                            summary_df = summary_df.sort_values("rank_key", ascending=False)
+                            driver_features = []
+                            for feat_name, row in summary_df.head(5).iterrows():
+                                hr = float(row.get("exp(coef)", np.exp(row.get("coef", 0))))
+                                p_val = float(row.get("p", 1.0))
+                                p_adj = float(row.get("p_adj", p_val))
+                                coef_val = float(row.get("coef", 0))
+                                direction = "raises_churn" if coef_val > 0 else "protects"
+                                driver_features.append({
+                                    "feature": str(feat_name),
+                                    "hazard_ratio": round(hr, 3),
+                                    "coef": round(coef_val, 3),
+                                    "p_value": round(p_val, 4),
+                                    "p_adj": round(p_adj, 4),
+                                    "direction": direction,
+                                    "significant": (p_adj if mode == "bh" else p_val) < 0.05,
+                                })
+                        except Exception:
+                            driver_features = []
+
+                        feature_store["predictive_churn_risk"] = {
+                            "model_applied": "CoxProportionalHazards",
+                            "total_active_evaluated": len(active_users),
+                            "high_risk_customers_count": high_risk_count,
+                            "lowest_forecasted_survival_time": round(lowest_remaining_time, 1),
+                            "risk_segment_pct": round(high_risk_count / len(active_users), 3) if len(active_users) > 0 else 0.0,
+                            "concordance_index": round(cph.concordance_index_, 3),
+                            "driver_features": driver_features,
+                        }
+        except Exception as e:
+            feature_store["predictive_churn_risk"] = {"error": f"Model failed to train: {str(e)}"}
+
+        feature_store["feature_list"] = list(feature_store.keys())
+        feature_store["feature_count"] = len(feature_store["feature_list"])
+
+        return {
+            "feature_store": feature_store,
+            "current_node": "feature_engineering",
+        }
+
+    except Exception as e:
+        return {
+            "feature_store": {
+                "rfm_scores": {},
+                "ltv_estimates": {},
+                "velocity_metrics": {},
+                "feature_count": 0,
+            },
+            "errors": [*state.get("errors", []), f"Feature engineering error: {str(e)}"],
+            "current_node": "feature_engineering",
+        }

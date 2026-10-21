@@ -1,0 +1,355 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "lenis/dist/lenis.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--nf-mono);
+  --font-heading: var(--nf-display);
+  --font-display: var(--nf-display);
+  --font-serif: var(--nf-serif);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
+  --color-ink: var(--ink);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --brand: #5eead4;      /* teal — retained */
+  --brand-2: #818cf8;    /* indigo — reasoning */
+  --brand-3: #e879f9;    /* fuchsia — insight */
+  --ink: #07080b;
+  --background: #07080b;
+  --foreground: #fafafa;
+  --card: #141416;
+  --card-foreground: #fafafa;
+  --popover: #141416;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  --secondary: #141416;
+  --secondary-foreground: #a1a1aa;
+  --muted: #141416;
+  --muted-foreground: #71717a;
+  --accent: #1e1e21;
+  --accent-foreground: #fafafa;
+  --destructive: #dc2626;
+  --border: #1e1e21;
+  --input: #1e1e21;
+  --ring: #3f3f46;
+  --chart-1: #a1a1aa;
+  --chart-2: #71717a;
+  --chart-3: #52525b;
+  --chart-4: #3f3f46;
+  --chart-5: #27272a;
+  --radius: 0.5rem;
+  --sidebar: #141416;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #09090b;
+  --sidebar-accent: #1e1e21;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #1e1e21;
+  --sidebar-ring: #3f3f46;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Tabular numerals for metric-heavy UI — used across the results dashboard. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Shared animations for the results dashboard. `--glow` is set per element
+   (e.g. [--glow:rgba(168,85,247,0.55)]) so one keyframe serves every accent. */
+@theme {
+  --animate-glow-ping: glow-ping 1.6s ease-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-fade-in: fade-in 0.4s ease forwards;
+  --animate-rise-in: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+  --animate-rail-slide: rail-slide 3s linear infinite;
+  --animate-drawer-in: drawer-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes glow-ping {
+    0% { box-shadow: 0 0 0 0 var(--glow, rgba(255, 255, 255, 0.4)); }
+    100% { box-shadow: 0 0 0 10px transparent; }
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise-in {
+    from { transform: translateY(16px) scale(0.97); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  @keyframes rail-slide {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(28px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::selection { background: rgba(255, 255, 255, 0.15); }
+
+/* ═══════════════════════════════════════════════════
+   Churnly — landing + shared effects
+   ═══════════════════════════════════════════════════ */
+
+/* Film grain over the whole page — subtle, keeps big dark areas from banding. */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain-shift 1.2s steps(6) infinite;
+}
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Gradient text used for the accent words in headlines. */
+.text-brand-gradient {
+  background: linear-gradient(100deg, #99f6e4 0%, #5eead4 30%, #818cf8 65%, #e879f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Moving sheen across gradient text — the "AI" shimmer on hero accent words. */
+.text-shimmer {
+  background: linear-gradient(100deg, #5eead4 0%, #818cf8 25%, #e879f9 45%, #ffffff 50%, #e879f9 55%, #818cf8 75%, #5eead4 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-text 5s linear infinite;
+}
+@keyframes shimmer-text {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+
+/* Rotating gradient hairline — badges and the prompt bar. */
+.border-beam {
+  position: relative;
+  isolation: isolate;
+}
+.border-beam::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(from var(--cta-angle), transparent 0 55%, #5eead4 70%, #e879f9 80%, transparent 90%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: cta-spin 4.5s linear infinite;
+}
+
+/* Blinking caret for typed text. */
+.caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: caret-blink 1s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+/* Cursor-following spotlight for cards: set --mx / --my from JS. */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(94, 234, 212, 0.10), transparent 45%);
+}
+.spotlight:hover::before { opacity: 1; }
+
+/* Hairline border that brightens toward the cursor. */
+.spotlight-border {
+  position: relative;
+}
+.spotlight-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(94, 234, 212, 0.55), rgba(255, 255, 255, 0.06) 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.7;
+}
+
+/* Animated conic ring for the primary CTA. */
+@property --cta-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.cta-ring {
+  position: relative;
+  isolation: isolate;
+}
+.cta-ring::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(from var(--cta-angle), #5eead4, #a78bfa, #5eead4 40%, transparent 60%, #5eead4);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: cta-spin 4s linear infinite;
+}
+.cta-ring::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(94, 234, 212, 0.35), transparent);
+  filter: blur(10px);
+  opacity: 0.6;
+}
+@keyframes cta-spin { to { --cta-angle: 360deg; } }
+
+/* Marquee for the tech strip. */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marquee 38s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .grain::before, .cta-ring::before, .animate-marquee, .text-shimmer, .border-beam::before, .caret::after { animation: none; }
+}
+
+@keyframes rail {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+/* ── Printable report (results/[job_id]/report) ── */
+@media print {
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  html, body { background: #fff !important; color: #18181b; }
+  .no-print { display: none !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a { color: inherit; text-decoration: none; }
+}
+
+/* Results dashboard extras */
+@keyframes scan {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(400%); }
+}
+@keyframes pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  60% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Route transition (app/template.tsx) */
+.route-curtain {
+  transform-origin: top;
+  animation: curtain-lift 0.8s cubic-bezier(0.87, 0, 0.13, 1) forwards;
+}
+.route-page { animation: page-in 0.7s ease-out 0.15s both; }
+@keyframes curtain-lift {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0); visibility: hidden; }
+}
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-curtain { display: none; }
+  .route-page { animation: none; }
+}
+@media print {
+  .route-curtain { display: none; }
+  .route-page { animation: none; opacity: 1; }
+}

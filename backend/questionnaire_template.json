@@ -1,0 +1,206 @@
+{
+  "questionnaire_metadata": {
+    "version": "1.0",
+    "created_at": "2026-04-18",
+    "company_name": "HelpDesk Pro",
+    "industry": "B2B SaaS - Customer Support Platform",
+    "completion_status": "complete"
+  },
+  "PHASE_1_OPENING": {
+    "Q1_BUSINESS_DESCRIPTION": {
+      "question": "Tell Us About Your Business — describe your business and your biggest retention challenge.",
+      "user_response": "HelpDesk Pro is a B2B SaaS platform that helps mid-market companies manage customer support tickets across email, chat, and social media. We serve 500+ companies with 50-500 employees each, ranging from $2K-$15K MRR. Our biggest retention challenge is that customers seem to churn right around the 6-month mark — we see a 40% churn spike at month 6. We suspect it's because onboarding is weak (customers don't integrate with their existing tools), but we're not sure. We've been growing fast (200% YoY) but retention has flatlined.",
+      "business_model": "B2B SaaS",
+      "industry_detected": "Customer Support / Helpdesk",
+      "customer_segment_detected": "Mid-market (50-500 employees)",
+      "self_diagnosed_root_cause": "Weak onboarding + poor tool integration",
+      "recent_events": "200% growth, but retention flatlined",
+      "pricing_hints": "$2K-$15K MRR",
+      "urgency_detected": "High (specific churn spike mentioned)"
+    }
+  },
+  "PHASE_2_DATA_UPLOAD": {
+    "Q2_DATA_UPLOAD_AND_CHURN_DEFINITION": {
+      "question": "What does churn mean in your data?",
+      "csv_file": "data/helpdesk_customers.csv",
+      "churn_definition": "Cancelled paid subscription",
+      "churn_column_name": "is_churned",
+      "churn_timestamp_column": "churn_month",
+      "voluntary_or_involuntary": "Primarily voluntary (active cancellations)",
+      "data_quality_check": {
+        "total_rows": 150,
+        "active_customers": 98,
+        "churned_customers": 52,
+        "overall_churn_rate": "34.7%",
+        "data_completeness": "98%",
+        "null_cells": 2,
+        "status": "PASS - Good quality"
+      }
+    }
+  },
+  "PHASE_3_STRUCTURED_CONTEXT": {
+    "Q2_BUSINESS_TYPE_CUSTOMER_STAGE": {
+      "question": "Business Type, Customer & Stage",
+      "business_model": "B2B SaaS",
+      "typical_customer": "Mid-market",
+      "company_stage": "Growth (PMF reached, scaling acquisition)",
+      "stage_implications": "High acquisition focus; retention problem likely due to onboarding speed not catching up with sales growth"
+    },
+    "Q3_REVENUE_MODEL_PRICING_FLEXIBILITY": {
+      "question": "Revenue Model & Pricing Flexibility",
+      "revenue_model": "Monthly subscription",
+      "pricing_tiers": [
+        "Starter: $299/mo (up to 5 team members)",
+        "Professional: $799/mo (up to 15 team members)",
+        "Enterprise: Custom"
+      ],
+      "pricing_flexibility": {
+        "can_adjust_base_price": false,
+        "can_offer_discounts": true,
+        "can_restructure_plans": true,
+        "can_extend_free_trials": true,
+        "locked_pricing": false
+      },
+      "flexibility_notes": "CEO wants to protect margins; can discount up to 20% for annual commitments, can extend trials from 14 to 30 days"
+    },
+    "Q4_PRODUCT_FEATURES_FLEXIBILITY": {
+      "question": "Product — Features & Flexibility",
+      "core_features": [
+        "Email ticket routing and management",
+        "Multi-channel inbox (email, chat, social)",
+        "Zapier/Make integrations",
+        "Basic reporting and SLAs",
+        "Team collaboration tools"
+      ],
+      "can_ship_changes_90_days": true,
+      "shipping_capacity": "2-week sprints; team of 5 engineers",
+      "natural_completion_point": "Partially - support work is never finished, but new features plateau after 6 months"
+    },
+    "Q5_ACQUISITION_COMPETITION": {
+      "question": "Acquisition & Competition",
+      "top_acquisition_channels": [
+        "Paid ads (Google, LinkedIn): 45% of new customers",
+        "Outbound sales: 35% of new customers",
+        "Referrals: 20% of new customers"
+      ],
+      "top_competitors": [
+        "Zendesk (enterprise focus)",
+        "Freshdesk (aggressive pricing)",
+        "Intercom (newer, AI-focused)"
+      ],
+      "where_customers_go_after_churn": "To a competitor (primarily Freshdesk for price, Zendesk for features)",
+      "competitive_advantage": "Ease of setup, lower cost than Zendesk, better UX than Freshdesk"
+    },
+    "Q6_OPERATIONAL_CAPACITY_CURRENT_EFFORTS": {
+      "question": "Operational Capacity & Current Efforts",
+      "support_model": "Email support + chat",
+      "support_team_size": 4,
+      "csat_score": 4.2,
+      "retention_tactics_in_place": [
+        "Onboarding flow / tutorials: Basic email drip, no in-app onboarding",
+        "Health scoring / at-risk alerts: Manual email check-ins at month 3",
+        "NPS / feedback collection: Quarterly survey",
+        "None: No CSM, no proactive outreach, no win-back campaigns"
+      ],
+      "retention_tactics_not_in_place": [
+        "Dedicated CSMs for key accounts",
+        "Proactive outreach to at-risk users",
+        "Win-back campaigns",
+        "Loyalty programs"
+      ],
+      "capacity_constraints": "4-person team cannot scale CSM; engineering focused on feature parity"
+    },
+    "Q7_PRIORITY_GOAL_TIMELINE": {
+      "question": "Priority, Goal & Timeline",
+      "customer_segment_priority": "Newest customers (first 90 days) - high early churn",
+      "top_goal": "Reduce churn rate",
+      "secondary_goal": "Improve NPS / satisfaction",
+      "timeline": "90-day plan",
+      "business_metrics": {
+        "current_churn_rate": "34.7%",
+        "target_churn_rate": "20% (by end of Q3)",
+        "ltv_current": "$2,400",
+        "ltv_target": "$3,600"
+      },
+      "risk_appetite": "Medium - willing to try tactical changes, not overhaul"
+    },
+    "Q8_ANYTHING_ELSE_OPTIONAL": {
+      "question": "Anything Else? Constraints, past failures, internal debates, upcoming changes",
+      "user_response": "We tried a win-back campaign 6 months ago (offered $100 credit) — got 12% reactivation but cost us $8K in credits. We also hired 2 salespeople 3 months ago who are now bringing in new customers fast, but onboarding hasn't scaled. CEO is pushing for upsell focus (expand revenue from existing customers) instead of reducing churn. We're also planning a major product launch (AI-powered ticket summarization) in 4 months.",
+      "past_failures": [
+        "Win-back campaign: Low ROI (12% reactivation, $8K cost)"
+      ],
+      "internal_debates": [
+        "CEO wants upsell focus vs. retention focus",
+        "Engineering wants to build new features vs. improve onboarding"
+      ],
+      "upcoming_changes": [
+        "2 new salespeople (3 months ago) - fast growth",
+        "Major product launch (AI ticket summarization) - 4 months out"
+      ],
+      "edge_cases": [
+        "Onboarding not scaling with sales growth",
+        "Product roadmap misaligned with churn problem"
+      ]
+    }
+  },
+  "PHASE_5_ADAPTIVE_FOLLOWUPS": {
+    "detected_patterns": [
+      {
+        "pattern_type": "High early-stage churn",
+        "metric": "35% churn in first 90 days",
+        "adaptive_question": "35% of your customers leave within 90 days. Walk us through onboarding — is it self-serve, guided, or a mix? How many customers actually complete integration during trial?"
+      },
+      {
+        "pattern_type": "Churn spike at specific tenure",
+        "metric": "40% churn spike at month 6",
+        "adaptive_question": "Clear churn spike at month 6. Are there any product limits that kick in at 6 months (feature gates, trial extensions ending)? Or is this when annual commitments come up for renewal?"
+      },
+      {
+        "pattern_type": "Churn by acquisition channel",
+        "metric": "Paid ads customers churn at 42%, organic at 18%",
+        "adaptive_question": "Customers from paid ads churn 2.3× more than organic/referral. Are you setting expectations clearly in ads? Are they getting lower-touch onboarding?"
+      }
+    ]
+  },
+  "QUALITY_ANALYSIS_METADATA": {
+    "input_completeness": {
+      "questions_answered": "8/8",
+      "structured_fields_completed": "6/6",
+      "optional_follow_up": "Completed",
+      "overall_score": 1.0,
+      "status": "Complete and high-quality"
+    },
+    "data_richness": {
+      "business_context_clarity": 0.95,
+      "constraint_definition_clarity": 0.9,
+      "acquisition_strategy_clarity": 0.85,
+      "product_clarity": 0.88,
+      "execution_capacity_clarity": 0.92,
+      "overall_context_score": 0.9,
+      "recommendation": "High-quality input. System has strong directional clarity."
+    },
+    "data_quality_for_analysis": {
+      "csv_data_rows": 150,
+      "churn_definition_clarity": "Clear (cancelled subscription)",
+      "churn_rate_realistic": true,
+      "early_churn_signal": true,
+      "acquisition_channel_tracking": true,
+      "ltv_calculable": true,
+      "cohort_analysis_possible": true,
+      "overall_data_quality": 0.92,
+      "status": "Production-ready"
+    },
+    "recommendation_confidence": {
+      "initial_hypothesis_confidence": 0.85,
+      "note": "Strong input context makes diagnosis more confident. Early churn + paid ads signal is clear.",
+      "recommendation_types_possible": [
+        "Onboarding redesign",
+        "Acquisition channel filtering",
+        "Trial extension for integration setup",
+        "Early-stage success metrics tracking",
+        "Sales-to-CS handoff process"
+      ]
+    }
+  }
+}
