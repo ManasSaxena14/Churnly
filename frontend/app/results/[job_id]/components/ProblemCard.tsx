@@ -19,7 +19,7 @@ function ImplStepRow({ s, ctx }: { s: ImplStep; ctx: Ctx }) {
           {s.owner && <span><b className="font-medium text-zinc-400">Owner:</b> {s.owner}</span>}
           {s.effort && <span><b className="font-medium text-zinc-400">Effort:</b> {s.effort}</span>}
           {s.deliverable && <span><b className="font-medium text-zinc-400">Deliverable:</b> {s.deliverable}</span>}
-          {s.dependencies && s.dependencies.length > 0 && <span><b className="font-medium text-zinc-400">Deps:</b> {s.dependencies.join(", ")}</span>}
+          {s.dependencies && s.dependencies.length > 0 && <span><b className="font-medium text-zinc-400">Depends on:</b> {s.dependencies.join(", ")}</span>}
         </div>
       </div>
       <div className="tnum self-center whitespace-nowrap text-[11px] tracking-[0.02em] text-zinc-300">{s.timeline}</div>

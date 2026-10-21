@@ -21,7 +21,7 @@ from app.config import get_llm, gemini_model
 
 llm = get_llm("gemini", temperature=0.3)   # gemini-3.1-flash-lite (fast tier, default)
 llm = get_llm("groq",   temperature=0.5)   # openai/gpt-oss-120b (default)
-llm = get_llm("gemini", model=gemini_model(depth, deep_call=True), temperature=0.2)  # → gemini-3.5-flash in deep mode
+llm = get_llm("gemini", model=gemini_model(depth, deep_call=True), temperature=0.2)  # → gemini-3-flash-preview in deep mode
 
 # Drop-in langchain interface:
 response = llm.invoke(prompt_text)                                      # raw
@@ -155,7 +155,7 @@ Set in `backend/app/config.py`:
 
 ```python
 GEMINI_FAST_MODEL = "gemini-3.1-flash-lite"   # default — every structured/shallow call
-GEMINI_DEEP_MODEL = "gemini-3.5-flash"        # deep mode only — reasoning-heavy calls
+GEMINI_DEEP_MODEL = "gemini-3-flash-preview"        # deep mode only — reasoning-heavy calls
 GROQ_MODEL = "openai/gpt-oss-120b"            # strategy agents
 ```
 

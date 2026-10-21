@@ -75,15 +75,15 @@ def _apply(raw: pd.DataFrame, scenario: list[dict[str, Any]], rng: np.random.Gen
             if n and src != dst:
                 chosen = rng.choice(idx, size=n, replace=False)
                 x.loc[chosen, col] = dst
-                applied.append(f"Moved {n:,} customers from {col} = {src} to {dst}")
+                applied.append(f"Moved {n:,} customers from {col} \"{src}\" to \"{dst}\"")
         elif kind == "scale":
             f = float(lever.get("factor", 1))
             x[col] = pd.to_numeric(x[col], errors="coerce") * f
-            applied.append(f"{col} × {f:g}")
+            applied.append(f"Changed {col} to {f * 100:g}% of today's value")
         elif kind == "cap":
             mx = float(lever.get("max"))
             x[col] = pd.to_numeric(x[col], errors="coerce").clip(upper=mx)
-            applied.append(f"{col} capped at {mx:g}")
+            applied.append(f"Limited {col} to at most {mx:g}")
     return x, applied
 
 
@@ -125,7 +125,7 @@ def run_scenario(ds: RunDataset, scenario: list[dict[str, Any]], horizon: float 
         "customers_saved": round(base_churners - new_churners, 1),
         "relative_change": round((new_churners - base_churners) / base_churners, 4) if base_churners else 0,
         "curve": [{"t": round(float(t), 2), "baseline": round(float(b), 4), "scenario": round(float(s), 4)} for t, b, s in zip(times, s_base, s_new)],
-        "caveat": "Model-based estimate: assumes the levers change churn the way they're associated with it today. Validate with an experiment.",
+        "caveat": "This is an estimate based on patterns in your data today. Real results can differ, so test the change with a small group first.",
     }
     if ds.value_col:
         val = pd.to_numeric(raw[ds.value_col], errors="coerce").fillna(0).to_numpy()

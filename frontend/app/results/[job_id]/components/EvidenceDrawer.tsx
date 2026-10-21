@@ -184,7 +184,7 @@ export function EvidenceDrawer({
             <button
               className="tnum rounded border border-white/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-50"
               onClick={onClose}
-              aria-label="Close evidence drawer"
+              aria-label="Close evidence"
             >
               esc&nbsp;✕
             </button>
@@ -201,7 +201,7 @@ export function EvidenceDrawer({
 
         {/* Vertical evidence chain with a dotted connector rail. */}
         <div className="relative flex flex-col gap-3 px-7 pb-3 pt-[18px] before:pointer-events-none before:absolute before:bottom-[22px] before:left-[38px] before:top-7 before:w-px before:bg-[repeating-linear-gradient(to_bottom,rgba(255,255,255,0.06)_0_4px,transparent_4px_8px)]">
-          <ChainNode n="01" tone="amber" kind="Triggering stat">
+          <ChainNode n="01" tone="amber" kind="The data">
             {stat ? (
               <>
                 <div className="tnum mb-3 inline-block rounded border border-amber-500/25 bg-amber-500/8 px-2 py-1 text-[11px] text-zinc-50">{stat.stat_id}</div>
@@ -211,11 +211,11 @@ export function EvidenceDrawer({
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-amber-500">{(stat.churn_rate * 100).toFixed(1)}%</div>
                   </div>
                   <div>
-                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Segment size</div>
+                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Customers in group</div>
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-zinc-50">{stat.size.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Lost users (est.)</div>
+                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Customers lost (est.)</div>
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-red-500">≈ {Math.round(stat.churn_rate * stat.size).toLocaleString()}</div>
                   </div>
                 </div>
@@ -224,11 +224,11 @@ export function EvidenceDrawer({
                 )}
               </>
             ) : (
-              <EmptyNote>No statistical bucket overlapped this hypothesis. Heuristic match was below threshold.</EmptyNote>
+              <EmptyNote>We couldn&apos;t link this cause to a specific customer group in your data.</EmptyNote>
             )}
           </ChainNode>
 
-          <ChainNode n="02" tone="purple" kind="RAG citations">
+          <ChainNode n="02" tone="purple" kind="Sources">
             {evSources.length > 0 || citationIds.length > 0 ? (
               <ul className="flex flex-col">
                 {evSources.map((e) => (
@@ -249,27 +249,27 @@ export function EvidenceDrawer({
                   ))}
               </ul>
             ) : (
-              <EmptyNote>No framework citations attached to this hypothesis.</EmptyNote>
+              <EmptyNote>No published sources were found for this cause.</EmptyNote>
             )}
           </ChainNode>
 
-          <ChainNode n="03" tone="amber" kind="Skeptic caveat">
+          <ChainNode n="03" tone="amber" kind="Reviewer's challenge">
             {counter ? (
               <>
                 <div className="text-[13px] leading-[1.55] text-zinc-300">{counter.counter_argument}</div>
                 {counter.strength && (
                   <div className="mt-2 flex items-center gap-2.5 text-[10px] uppercase tracking-[0.12em]">
                     <SevChip level={counter.strength}>{counter.strength}</SevChip>
-                    <span className="text-[9.5px] normal-case text-zinc-600">— evidence challenge from professional_skeptic</span>
+                    <span className="text-[9.5px] normal-case text-zinc-600">— raised by the independent reviewer</span>
                   </div>
                 )}
               </>
             ) : (
-              <EmptyNote>Skeptic did not register a directed counter-argument against this hypothesis.</EmptyNote>
+              <EmptyNote>The reviewer didn&apos;t raise a specific challenge to this cause.</EmptyNote>
             )}
           </ChainNode>
 
-          <ChainNode n="04" tone="violet" kind="Alternative explanation">
+          <ChainNode n="04" tone="violet" kind="Other possible explanation">
             {alt ? (
               <>
                 <div className="text-[13px] leading-[1.55] text-zinc-300">{alt.alternative}</div>
@@ -280,34 +280,34 @@ export function EvidenceDrawer({
                 )}
               </>
             ) : (
-              <EmptyNote>No alternative explanation was generated for this hypothesis.</EmptyNote>
+              <EmptyNote>No other explanation was suggested.</EmptyNote>
             )}
           </ChainNode>
 
-          <ChainNode n="05" tone="blue" kind="CoxPH hazard drivers">
+          <ChainNode n="05" tone="blue" kind="What raises churn risk">
             {driverFeatures && driverFeatures.length > 0 ? (
               <ul className="flex flex-col gap-2">
                 {driverFeatures.slice(0, 5).map((d) => (
                   <li key={d.feature} className="flex items-baseline justify-between gap-3 border-b border-dotted border-white/6 py-[7px] last:border-b-0">
                     <div className="text-xs font-medium text-zinc-50">{d.feature}</div>
                     <div className="tnum flex items-center gap-2.5 text-[10.5px] text-zinc-500">
-                      <span>HR <b className="font-semibold text-zinc-50">{d.hazard_ratio.toFixed(2)}</b></span>
+                      <span><b className="font-semibold text-zinc-50">{d.hazard_ratio.toFixed(2)}×</b> risk</span>
                       <span>p {d.p_value.toFixed(3)}</span>
-                      {d.p_adj != null && <span title="Benjamini-Hochberg adjusted">p_adj {d.p_adj.toFixed(3)}</span>}
-                      <span className={cn("rounded-[3px] border border-white/6 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-[0.08em]", dirClass(d.direction))}>{d.direction}</span>
-                      {d.significant && <span className="text-[9.5px] tracking-[0.06em] text-purple-500">significant</span>}
+                      
+                      <span className={cn("rounded-[3px] border border-white/6 px-1.5 py-px text-[9.5px] font-semibold uppercase tracking-[0.08em]", dirClass(d.direction))}>{d.direction === "raises_churn" ? "raises risk" : d.direction === "protects" ? "lowers risk" : d.direction}</span>
+                      {d.significant && <span className="text-[9.5px] tracking-[0.06em] text-purple-500">confirmed</span>}
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <EmptyNote>No quantitative driver features available from CoxPH.</EmptyNote>
+              <EmptyNote>No measurable risk factors were found.</EmptyNote>
             )}
           </ChainNode>
         </div>
 
         <footer className="mt-auto flex items-center justify-between gap-3 border-t border-white/6 px-7 pb-[22px] pt-3.5">
-          <span className="text-[10px] uppercase tracking-[0.1em] text-zinc-600">esc · click backdrop · or</span>
+          <span className="text-[10px] uppercase tracking-[0.1em] text-zinc-600">press Esc, click outside, or</span>
           <button
             className="rounded-md border border-zinc-50 bg-zinc-50 px-4 py-2 text-xs font-semibold tracking-[-0.005em] text-black transition-colors hover:bg-white"
             onClick={onClose}

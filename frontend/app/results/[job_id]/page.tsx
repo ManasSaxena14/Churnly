@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { primeLiveDemo } from "@/lib/demo";
@@ -32,6 +32,18 @@ import { CopilotLauncher, CopilotPanel } from "./components/CopilotPanel";
 import { ResultTabs, type ResultTab } from "./components/ResultTabs";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify } from "./export";
 
+// The stage timer re-renders this page every second while a run is live.
+// Memoised sections only re-render when their own stage data arrives, so the
+// charts and big lists aren't rebuilt on every tick.
+const MSignal = memo(SignalSection);
+const MChurnProfile = memo(ChurnProfileSection);
+const MDiagnosis = memo(DiagnosisSection);
+const MSimulation = memo(SimulationSection);
+const MStrategy = memo(StrategySection);
+const MRunMetrics = memo(RunMetricsPanel);
+const MRisk = memo(RiskPanel);
+const MWhatIf = memo(WhatIfPanel);
+
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
@@ -43,6 +55,7 @@ export default function ResultsPage() {
   const [hitlSubmitting, setHitlSubmitting] = useState(false);
   const [ctx, setCtx] = useState<Ctx>(() => buildCtx({}));
   const [evidenceOpenIdx, setEvidenceOpenIdx] = useState<number | null>(null);
+  const openEvidence = useCallback((i: number) => setEvidenceOpenIdx(i), []);
   const [tab, setTab] = useState<ResultTab>("report");
   const [copilotOpen, setCopilotOpen] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
@@ -53,7 +66,7 @@ export default function ResultsPage() {
       gsap.from("[data-hdr]", { y: 18, opacity: 0, stagger: 0.07, duration: 0.9, ease: "expo.out" });
       gsap.utils.toArray<HTMLElement>("[data-aurora]").forEach((el, i) => {
         gsap.to(el, {
-          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15), scale: gsap.utils.random(0.9, 1.2),
+          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15),
           duration: gsap.utils.random(10, 16), ease: "sine.inOut", repeat: -1, yoyo: true, delay: i,
         });
       });
@@ -189,9 +202,9 @@ export default function ResultsPage() {
   return (
     <div ref={pageRef} className='min-h-screen bg-ink text-[13px] leading-normal tracking-[-0.005em] text-zinc-50 antialiased [font-feature-settings:"cv11","ss01","ss03"]'>
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div data-aurora className="absolute right-[5%] top-[-25%] h-[55vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.07),transparent)] blur-2xl" />
-        <div data-aurora className="absolute bottom-[-25%] right-[-10%] h-[60vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.08),transparent)] blur-2xl" />
-        <div data-aurora className="absolute bottom-[20%] left-[20%] h-[40vh] w-[30vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.04),transparent)] blur-2xl" />
+        <div data-aurora className="absolute right-[5%] top-[-25%] h-[55vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.07),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[-25%] right-[-10%] h-[60vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.08),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[20%] left-[20%] h-[40vh] w-[30vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.04),transparent)] will-change-transform" />
       </div>
       <CompletionBurst complete={complete && !isDemo} />
       <div className="relative flex min-h-screen">
@@ -269,43 +282,43 @@ export default function ResultsPage() {
 
             {tab === "report" && (
               <div>
-              {risk ? <SignalSection data={risk} ctx={ctx} visible={true} />
-                    : <PendingSection title="Signal" tone="amber" label="Stage 1 · awaiting risk_ready" />}
+              {risk ? <MSignal data={risk} ctx={ctx} visible={true} />
+                    : <PendingSection title="Risk overview" tone="amber" label="Step 1 · in progress" />}
 
-              {churn ? <ChurnProfileSection data={churn} ctx={ctx} visible={true} />
-                     : <PendingSection title="Churn Profile" tone="blue" label="Stage 2 · awaiting churn_profile_ready" />}
+              {churn ? <MChurnProfile data={churn} ctx={ctx} visible={true} />
+                     : <PendingSection title="How long customers stay" tone="blue" label="Step 2 · waiting" />}
 
-              {dx ? <DiagnosisSection data={dx} ctx={ctx} visible={true} onOpenEvidence={(i) => setEvidenceOpenIdx(i)} />
-                  : <PendingSection title="Root Cause" tone="purple" label="Stage 3 · awaiting diagnosis_ready" />}
+              {dx ? <MDiagnosis data={dx} ctx={ctx} visible={true} onOpenEvidence={openEvidence} />
+                  : <PendingSection title="Why customers leave" tone="purple" label="Step 3 · waiting" />}
 
               {hitlData && stream.hitlSubmitted && (
-                <Section tone="violet" title="Clarify" meta="Stage 4 · human in the loop">
+                <Section tone="violet" title="Your input" meta="Step 4 · your input">
                   <div className="flex animate-fade-in items-center gap-3 rounded-[10px] border border-violet-600/25 bg-violet-600/6 px-[18px] py-3.5 text-[13px] text-zinc-300 opacity-0">
                     <StatusDot tone="teal" />
-                    <span>✓ Answers routed — strategies generating from your inputs.</span>
+                    <span>✓ Thanks — your answers are being used to shape the plan.</span>
                   </div>
                 </Section>
               )}
 
-              {sim ? <SimulationSection data={sim} visible={true} />
-                   : <PendingSection title="Projected Impact" tone="teal" label="Stage 5 · awaiting simulation_ready" />}
+              {sim ? <MSimulation data={sim} visible={true} />
+                   : <PendingSection title="Expected impact" tone="teal" label="Step 5 · waiting" />}
 
-              {playbook ? <StrategySection data={playbook} ctx={ctx} visible={true} groundedness={groundedness} />
+              {playbook ? <MStrategy data={playbook} ctx={ctx} visible={true} groundedness={groundedness} />
                 : playbookError ? (
-                  <Section tone="red" title="Strategy" meta="Stage 6 · failed">
+                  <Section tone="red" title="Your retention plan" meta="Step 6 · didn't finish">
                     <div className="rounded-[10px] border border-red-500/25 bg-red-500/[0.04] px-4 py-3.5 text-[12.5px] leading-[1.6] text-zinc-300">
-                      <div className="mb-1 font-semibold text-red-300">The playbook could not be generated.</div>
+                      <div className="mb-1 font-semibold text-red-300">We couldn&apos;t create the plan this time.</div>
                       <div className="font-mono text-[11.5px] text-zinc-500">{playbookError}</div>
                     </div>
                   </Section>
                 )
-                : <PendingSection title="Strategy" tone="emerald" label="Stage 6 · awaiting solution_ready" />}
+                : <PendingSection title="Your retention plan" tone="emerald" label="Step 6 · waiting" />}
 
-              <RunMetricsPanel metrics={stream.metrics} complete={complete} />
+              <MRunMetrics metrics={stream.metrics} complete={complete} />
               </div>
             )}
-            {tab === "risk" && analyticsReady && <RiskPanel jobId={jobId} />}
-            {tab === "whatif" && analyticsReady && <WhatIfPanel jobId={jobId} />}
+            {tab === "risk" && analyticsReady && <MRisk jobId={jobId} />}
+            {tab === "whatif" && analyticsReady && <MWhatIf jobId={jobId} />}
           </div>
         </main>
 

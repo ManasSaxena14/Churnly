@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
+import { DENSITY, FrameGovernor, detectTier, initialPixelRatio, wantsAntialias } from "./quality";
 
 /* Hero scene — the agent graph as a living network.
    Nodes sit on a jittered sphere and connect to their nearest neighbours.
@@ -110,16 +111,25 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
     if (!mount) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const small = window.innerWidth < 768;
+    const tier = detectTier();
+    const density = DENSITY[tier];
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({
+        antialias: wantsAntialias(initialPixelRatio(tier)), alpha: true, powerPreference: "high-performance",
+      });
     } catch {
       mount.dataset.fallback = "true";
       return;
     }
-    const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    const pixelRatio = initialPixelRatio(tier);
     renderer.setPixelRatio(pixelRatio);
+    const governor = new FrameGovernor(pixelRatio);
+    // Background tabs don't need frames at all.
+    let pageVisible = !document.hidden;
+    const onVis = () => { pageVisible = !document.hidden; };
+    document.addEventListener("visibilitychange", onVis);
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
     Object.assign(renderer.domElement.style, { width: "100%", height: "100%", display: "block" });
@@ -131,7 +141,7 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
     scene.add(brain);
 
     // ── nodes: fibonacci sphere + inner shell for depth ──────────────
-    const N = small ? 110 : 170;
+    const N = Math.round((small ? 110 : 170) * Math.max(0.6, density));
     const base: THREE.Vector3[] = [];
     const golden = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < N; i++) {
@@ -209,7 +219,7 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
     brain.add(new THREE.LineSegments(edgeGeo, edgeMat));
 
     // ── signals: comets random-walking the edges ────────────────────
-    const P = small ? 45 : 80;
+    const P = Math.round((small ? 45 : 80) * density);
     type Pulse = { from: number; to: number; t: number; speed: number };
     const pulses: Pulse[] = Array.from({ length: P }, () => {
       const from = Math.floor(Math.random() * N);
@@ -233,7 +243,7 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
     brain.add(new THREE.Points(pulseGeo, pulseMat));
 
     // ── data dust streaming in ──────────────────────────────────────
-    const D = small ? 900 : 1800;
+    const D = Math.round((small ? 900 : 1800) * density);
     const dustGeo = new THREE.BufferGeometry();
     const dr = new Float32Array(D), da = new Float32Array(D), ds = new Float32Array(D), dseed = new Float32Array(D);
     for (let i = 0; i < D; i++) {
@@ -352,9 +362,17 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (!visible) return;
+      if (!visible || !pageVisible) return;
       step(reduced ? 0 : dt);
       renderer.render(scene, camera);
+      const lower = governor.sample(dt);
+      if (lower !== null) {
+        renderer.setPixelRatio(lower);
+        nodeUniforms.uPixelRatio.value = lower;
+        dustUniforms.uPixelRatio.value = lower;
+        (pulseMat.uniforms.uPixelRatio as { value: number }).value = lower;
+        resize();
+      }
     };
     if (reduced) {
       // settle into a still frame with a few lit nodes
@@ -364,6 +382,7 @@ export function NeuralScene({ progressRef, className }: { progressRef?: MutableR
 
     return () => {
       cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVis);
       ro.disconnect();
       io.disconnect();
       window.removeEventListener("pointermove", onMove);

@@ -9,7 +9,7 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
   const nInterventions = data.interventions?.length ?? 0;
   if (data.simulated === false || nInterventions === 0) {
     return (
-      <Section tone="teal" title="Projected Impact" meta="nothing to simulate" visible={visible}>
+      <Section tone="teal" title="Expected impact" meta="no ideas to test" visible={visible}>
         <div className="rounded-[10px] border border-white/6 bg-white/[0.02] px-4 py-3.5 text-[12.5px] leading-[1.6] text-zinc-400">
           No strategy reached the simulator, so there is no lift to report. Check the strategy stage
           for errors — we don&apos;t show a placeholder number in its place.
@@ -20,8 +20,8 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
   return (
     <Section
       tone="teal"
-      title="Projected Impact"
-      meta={`stress-tested in ${data.iterations.toLocaleString()} simulations`}
+      title="Expected impact"
+      meta={`tested in ${data.iterations.toLocaleString()} simulations`}
       visible={visible}
     >
       <p className="mb-3.5 max-w-[70ch] text-[12.5px] leading-[1.65] text-zinc-500">
@@ -32,26 +32,26 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
 
       <div className="mb-3.5 grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-3">
         <Stat
-          label="Likely retention lift"
+          label="Likely improvement"
           tone="teal"
           size="lg"
           value={`+${data.expected_lift}%`}
-          sub="most likely combined outcome"
+          sub="in customers kept"
         />
         <Stat
-          label="If things go poorly"
+          label="Cautious case"
           value={`+${data.confidence_low}%`}
           sub="19 in 20 simulations beat this"
         />
         <Stat
-          label="If things go well"
+          label="Best case"
           value={`+${data.confidence_high}%`}
-          sub="best 1-in-20 outcome"
+          sub="top 1 in 20 outcomes"
         />
         <Stat
           label="Estimated return"
           value={`${data.expected_roi}%`}
-          sub="vs. program cost"
+          sub="compared with the cost"
         />
       </div>
 
@@ -74,7 +74,7 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
                   {it.lift_prior_anchor === "rag" && (
                     <div className="mt-1 inline-flex items-center gap-1 text-[9.5px] uppercase tracking-[0.06em] text-teal-600">
                       <span className="h-1 w-1 rounded-full bg-teal-600" />
-                      grounded in published case studies
+                      based on published case studies
                     </div>
                   )}
                 </div>
@@ -103,11 +103,11 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
       )}
 
       <p className="mt-2.5 text-[10.5px] leading-[1.6] text-zinc-600">
-        Method: Monte Carlo simulation — {data.iterations.toLocaleString()} random draws per
-        intervention. &ldquo;Cautious&rdquo; and &ldquo;best case&rdquo; are the 10th and 90th percentile of
-        simulated outcomes; the combined range uses the 5th–95th percentile.
+        How we estimate this: each idea is played out in {data.iterations.toLocaleString()} simulated
+        versions of your customer base. &ldquo;Cautious&rdquo; and &ldquo;best case&rdquo; show the range
+        most outcomes fall within.
         {typeof data.rag_anchored_count === "number" && data.rag_anchored_count > 0 &&
-          ` ${data.rag_anchored_count} of ${nInterventions} estimates are anchored to lift figures from published retention case studies.`}
+          ` ${data.rag_anchored_count} of ${nInterventions} estimates are based on results from published retention case studies.`}
       </p>
     </Section>
   );

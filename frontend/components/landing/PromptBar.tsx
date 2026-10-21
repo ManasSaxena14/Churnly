@@ -45,7 +45,7 @@ export function PromptBar() {
   return (
     <Link
       href="/form"
-      className="border-beam group flex w-full max-w-xl items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-2 pl-3 backdrop-blur-xl transition-colors hover:bg-white/[0.06]"
+      className="border-beam group flex w-full max-w-xl items-center gap-3 rounded-2xl border border-white/10 bg-[#0e1016]/90 p-2 pl-3 transition-colors hover:bg-[#13161e]/95"
       aria-label="Start an analysis"
     >
       <span className="inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-black/30 px-2.5 font-mono text-[11.5px] text-zinc-300">

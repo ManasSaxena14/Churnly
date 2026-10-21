@@ -45,13 +45,13 @@ export function Sidebar({
     return fmtElapsed((end ?? now) - start);
   };
   const chips = [
-    { k: "Goal",      v: ctx.goal.split(" ").slice(0, 3).join(" "), why: <>Drives selection of <em className="not-italic text-violet-600">retention-focused</em> playbooks. Filters out off-goal interventions.</> },
-    { k: "Segment",   v: ctx.segment.length > 18 ? ctx.segment.slice(0, 16) + "…" : ctx.segment, why: <>Diagnosis and roadmap focus on the <em className="not-italic text-violet-600">{ctx.segment}</em> cohort.</> },
-    { k: "Timeline",  v: ctx.quickWins ? "Quick · 30d" : ctx.longTerm ? "Long-term" : "Standard", why: <>{ctx.quickWins ? <>30-day phase rendered <em className="not-italic text-violet-600">full opacity</em>; 60/90-day phases dimmed.</> : <>Full 30/60/90 roadmap rendered.</>}</> },
-    { k: "Model",     v: ctx.businessModel, why: <>Hypothesis priors and strategy framing tuned for <em className="not-italic text-violet-600">{ctx.businessModel}</em>.</> },
-    ...(ctx.pricingLocked ? [{ k: "Pricing", v: "Locked", why: <>Pricing experiments <em className="not-italic text-violet-600">removed</em> from feasible interventions.</> }] : []),
-    ...(ctx.noCSM ? [{ k: "Support", v: "Self-serve", why: <>CSM-led playbooks deprioritized; behavioral triggers favored.</> }] : []),
-    ...(!ctx.canShip ? [{ k: "Can ship", v: "No", why: <>Steps requiring engineering get <em className="not-italic text-violet-600">&quot;Needs eng&quot;</em> badges.</> }] : []),
+    { k: "Goal",      v: ctx.goal.split(" ").slice(0, 3).join(" "), why: <>Recommendations focus on <em className="not-italic text-violet-600">this goal</em>; ideas that don&apos;t serve it are left out.</> },
+    { k: "Segment",   v: ctx.segment.length > 18 ? ctx.segment.slice(0, 16) + "…" : ctx.segment, why: <>The analysis and plan focus on <em className="not-italic text-violet-600">{ctx.segment}</em>.</> },
+    { k: "Timeline",  v: ctx.quickWins ? "Quick · 30d" : ctx.longTerm ? "Long-term" : "Standard", why: <>{ctx.quickWins ? <>The <em className="not-italic text-violet-600">first 30 days</em> are highlighted; later phases are shown lighter.</> : <>You get the full 30/60/90 day plan.</>}</> },
+    { k: "Model",     v: ctx.businessModel, why: <>Benchmarks and strategies are chosen for a <em className="not-italic text-violet-600">{ctx.businessModel}</em> business.</> },
+    ...(ctx.pricingLocked ? [{ k: "Pricing", v: "Locked", why: <>Ideas that change pricing are <em className="not-italic text-violet-600">left out</em>.</> }] : []),
+    ...(ctx.noCSM ? [{ k: "Support", v: "Self-serve", why: <>Automated, in-product ideas are preferred over ones that need a support team.</> }] : []),
+    ...(!ctx.canShip ? [{ k: "Can ship", v: "No", why: <>Steps that need engineering work are marked <em className="not-italic text-violet-600">&quot;Needs eng&quot;</em>.</> }] : []),
   ];
   return (
     <aside className="sticky top-0 flex h-screen w-60 flex-shrink-0 flex-col gap-6 overflow-y-auto border-r border-white/6 bg-[#0a0b0e]/90 backdrop-blur-xl px-[18px] py-5">
@@ -165,7 +165,7 @@ export function Sidebar({
       </div>
 
       <div>
-        <MicroLabel className="mb-2.5">Your Context</MicroLabel>
+        <MicroLabel className="mb-2.5">Your settings</MicroLabel>
         <div className="flex flex-col items-start gap-1.5">
           {chips.map((c) => <ContextChip key={c.k} k={c.k} v={c.v || "—"} why={c.why} />)}
         </div>

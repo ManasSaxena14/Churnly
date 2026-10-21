@@ -66,7 +66,7 @@ export function Section({
       const body = root.current?.querySelector("[data-sec='body']");
       if (body?.children.length) {
         tl.from(body.children, {
-          y: 18, opacity: 0, filter: "blur(6px)", duration: 0.85, stagger: 0.07, clearProps: "filter,transform",
+          y: 18, opacity: 0, duration: 0.85, stagger: 0.07, clearProps: "transform",
         }, 0.12);
       }
     },

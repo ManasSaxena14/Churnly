@@ -8,10 +8,10 @@ import { SplitReveal } from "@/components/motion";
 type Row = { label: string; bh: number; raw: number; better: "lower" | "higher"; note: string };
 
 const ROWS: Row[] = [
-  { label: "False-positive rate", bh: EVAL_RESULTS.withBH.falsePositiveRate, raw: EVAL_RESULTS.rawP.falsePositiveRate, better: "lower", note: "families with no planted driver flagged anyway" },
-  { label: "Datasets with a false alarm on pure noise", bh: EVAL_RESULTS.withBH.noiseFalseAlarmDatasets, raw: EVAL_RESULTS.rawP.noiseFalseAlarmDatasets, better: "lower", note: "plan tier / channel columns that never affect churn" },
-  { label: "Driver precision", bh: EVAL_RESULTS.withBH.driverPrecision, raw: EVAL_RESULTS.rawP.driverPrecision, better: "higher", note: "of everything flagged, how much was real" },
-  { label: "Driver recall", bh: EVAL_RESULTS.withBH.driverRecall, raw: EVAL_RESULTS.rawP.driverRecall, better: "higher", note: "the price: weak drivers sometimes fall below the corrected bar" },
+  { label: "False alarms", bh: EVAL_RESULTS.withBH.falsePositiveRate, raw: EVAL_RESULTS.rawP.falsePositiveRate, better: "lower", note: "causes flagged that weren't really there" },
+  { label: "Datasets fooled by random noise", bh: EVAL_RESULTS.withBH.noiseFalseAlarmDatasets, raw: EVAL_RESULTS.rawP.noiseFalseAlarmDatasets, better: "lower", note: "columns that have nothing to do with churn" },
+  { label: "Accuracy of flagged causes", bh: EVAL_RESULTS.withBH.driverPrecision, raw: EVAL_RESULTS.rawP.driverPrecision, better: "higher", note: "of everything flagged, how much was real" },
+  { label: "Real causes found", bh: EVAL_RESULTS.withBH.driverRecall, raw: EVAL_RESULTS.rawP.driverRecall, better: "higher", note: "the trade-off: very weak causes are sometimes left out" },
 ];
 
 const fmt = (n: number) => `${(n * 100).toFixed(1)}%`;
@@ -46,30 +46,29 @@ export function EvalShowcase() {
     <section ref={root} id="evals" className="relative border-y border-white/6 bg-[linear-gradient(180deg,rgba(94,234,212,0.03),transparent_40%)]">
       <div className="mx-auto grid max-w-7xl gap-14 px-4 py-28 sm:px-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Evals, not vibes</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Proven accuracy</p>
           <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[44px]">
             We hide the answer.{" "}
-            <span data-keep className="inline-block font-serif font-normal italic text-zinc-400">Then check if it&apos;s found.</span>
+            <span data-keep className="inline-block font-serif font-normal italic text-zinc-400">Then check we find it.</span>
           </SplitReveal>
           <p className="mt-6 max-w-md text-[15px] leading-[1.75] text-zinc-400">
-            The harness generates customer datasets where we plant the churn drivers — monthly
-            contracts, support friction, low usage — at random strengths, plus columns that do
-            nothing at all. Then it scores what the stats layer flags, with and without
-            multiple-testing correction.
+            We create test customer data where we know exactly why people leave — monthly
+            contracts, support problems, low usage — mixed with columns that mean nothing. Then
+            we measure what gets found, with and without our false-alarm filter.
           </p>
           <div className="mt-8 rounded-2xl border border-white/8 bg-black/40 p-4 font-mono text-[12px] leading-[1.8] text-zinc-400">
             <span className="text-zinc-600">$</span> make eval
             <br />
-            <span className="text-zinc-600">→</span> {EVAL_RESULTS.datasets} datasets · BH vs raw ablation
+            <span className="text-zinc-600">→</span> {EVAL_RESULTS.datasets} test datasets · with vs without the filter
             <br />
-            <span className="text-zinc-600">$</span> make eval-full <span className="text-zinc-600"># + LLM recall, groundedness, z-gate ablation</span>
+            <span className="text-zinc-600">$</span> make eval-full <span className="text-zinc-600"># full AI run: causes found, evidence score</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-7">
           <div className="flex items-center gap-5 text-[12px] text-zinc-400">
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand" /> with Benjamini-Hochberg</span>
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /> raw p &lt; 0.05</span>
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand" /> with Churnly&apos;s false-alarm filter</span>
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-zinc-600" /> standard tests only</span>
           </div>
           {ROWS.map((r) => (
             <div key={r.label} data-eval="row">

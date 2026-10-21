@@ -26,12 +26,12 @@ function Picker() {
 
   return (
     <div className="flex flex-wrap items-end gap-3">
-      {[["Baseline (A)", a, setA], ["Compare to (B)", b, setB]].map(([lbl, val, set]) => (
+      {[["Before (A)", a, setA], ["After (B)", b, setB]].map(([lbl, val, set]) => (
         <label key={lbl as string} className="flex flex-col gap-1.5">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-500">{lbl as string}</span>
           <select value={val as string} onChange={(e) => (set as (v: string) => void)(e.target.value)}
             className="h-10 min-w-[240px] rounded-xl border border-white/10 bg-ink px-3 text-[13.5px] text-zinc-100 outline-none focus:border-brand/50">
-            <option value="">Pick a run…</option>
+            <option value="">Choose an analysis…</option>
             {runs.map((r) => <option key={r.job_id} value={r.job_id}>{label(r)}</option>)}
           </select>
         </label>
@@ -72,13 +72,13 @@ function Report() {
   );
 
   if (!a || !b) return null;
-  if (loading) return <div className="mt-10 flex items-center gap-2 text-[13.5px] text-zinc-400"><Loader2 className="h-4 w-4 animate-spin text-brand" /> Testing every segment for drift…</div>;
+  if (loading) return <div className="mt-10 flex items-center gap-2 text-[13.5px] text-zinc-400"><Loader2 className="h-4 w-4 animate-spin text-brand" /> Comparing every customer group…</div>;
   if (error) return <div className="mt-10 rounded-2xl border border-rose-500/25 bg-rose-500/[0.05] px-5 py-4 text-[13.5px] text-rose-200">{error}</div>;
   if (!data) return null;
 
   const up = data.overall.delta_pp > 0;
   // Bars show movement beyond the overall shift — the segments that need explaining.
-  const seg = data.segments.slice(0, 12).map((s) => ({ label: s.stat_id, value: s.excess_pp, strong: s.significant && Math.abs(s.excess_pp) >= 3 }));
+  const seg = data.segments.slice(0, 12).map((s) => ({ label: s.label ?? s.stat_id, value: s.excess_pp, strong: s.significant && Math.abs(s.excess_pp) >= 3 }));
 
   return (
     <div ref={root} className="mt-10 flex flex-col gap-4">
@@ -92,18 +92,18 @@ function Report() {
             <ArrowRight className="h-5 w-5 text-zinc-600" />
             <span className={up ? "text-rose-300" : "text-emerald-300"}><CountUp value={`${(data.overall.churn_b * 100).toFixed(1)}%`} /></span>
           </div>
-          <div className="mt-1 font-mono text-[11px] text-zinc-500">{data.overall.delta_pp > 0 ? "+" : ""}{data.overall.delta_pp} pp · p = {data.overall.p_value ?? "—"}</div>
+          <div className="mt-1 font-mono text-[11px] text-zinc-500">{data.overall.delta_pp > 0 ? "+" : ""}{data.overall.delta_pp} percentage points · {data.overall.p_value != null && data.overall.p_value < 0.05 ? "a real change" : "could be chance"}</div>
         </div>
         <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-5">
           <div className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-400">Real changes</div>
           <div className="mt-3 font-display text-[34px] font-semibold tnum"><CountUp value={String(data.significant_changes)} /><span className="text-[16px] text-zinc-500"> / {data.tests_run}</span></div>
-          <div className="mt-1 font-mono text-[11px] text-zinc-500">segments that survive BH correction</div>
+          <div className="mt-1 font-mono text-[11px] text-zinc-500">customer groups that truly changed (not chance)</div>
         </div>
         <div className="rounded-2xl border border-white/8 bg-white/[0.025] p-5 text-[12.5px]">
-          <div className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-400">Runs</div>
+          <div className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-400">Analyses</div>
           <div className="mt-3 flex flex-col gap-2">
-            <span><b className="mr-2 text-brand">A</b>{label(data.a)} · {data.a.rows.toLocaleString()} rows</span>
-            <span><b className="mr-2 text-fuchsia-300">B</b>{label(data.b)} · {data.b.rows.toLocaleString()} rows</span>
+            <span><b className="mr-2 text-brand">A</b>{label(data.a)} · {data.a.rows.toLocaleString()} customers</span>
+            <span><b className="mr-2 text-fuchsia-300">B</b>{label(data.b)} · {data.b.rows.toLocaleString()} customers</span>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@ function Report() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div data-cmp className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-          <div className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-sky-300">Survival · Kaplan-Meier</div>
+          <div className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-sky-300">Customers staying over time</div>
           <LineChart xLabel="tenure" series={[
             { name: "A", color: "#5eead4", points: data.km.a.map((p) => ({ x: p.t, y: p.s })), area: true },
             { name: "B", color: "#e879f9", points: data.km.b.map((p) => ({ x: p.t, y: p.s })) },
@@ -125,8 +125,8 @@ function Report() {
         </div>
         <div data-cmp className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
           <div className="mb-4 flex items-center justify-between font-mono text-[10.5px] uppercase tracking-[0.14em]">
-            <span className="text-fuchsia-300">Segment drift beyond the overall shift</span>
-            <span className="text-zinc-600">grey = noise or moved with overall</span>
+            <span className="text-fuchsia-300">Groups that changed more than average</span>
+            <span className="text-zinc-600">grey = no real change</span>
           </div>
           <DivergingBars rows={seg} />
         </div>
@@ -134,7 +134,7 @@ function Report() {
 
       {data.drivers.length > 0 && (
         <div data-cmp className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-          <div className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-indigo-300">Hazard drivers · A → B</div>
+          <div className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-indigo-300">What raises churn · before → after</div>
           <div className="grid gap-x-8 gap-y-2.5 md:grid-cols-2">
             {data.drivers.map((d) => (
               <div key={d.feature} className="flex items-center gap-3 text-[12.5px]">
@@ -157,12 +157,12 @@ function Report() {
 export default function ComparePage() {
   return (
     <AppShell>
-      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Drift detection</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Compare analyses</p>
       <SplitReveal as="h1" className="mt-2 font-display text-[34px] font-semibold tracking-[-0.035em] sm:text-[44px]">
         What changed <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">between runs?</span>
       </SplitReveal>
       <p className="mb-8 mt-2 max-w-2xl text-[14.5px] leading-[1.7] text-zinc-400">
-        Every segment is re-tested between the two datasets and Benjamini-Hochberg corrected — so you see what really moved, not noise.
+        We compare every customer group between the two datasets and filter out changes that could be chance — so you only see what really moved.
       </p>
       <Suspense fallback={null}>
         <Picker />

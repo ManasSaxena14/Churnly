@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { friendlyStat } from "@/lib/labels";
 import type {
   DiagnosisData, GroundednessReport, Playbook, ProblemSolution, RunMetrics, SimulationData,
 } from "./types";
@@ -63,29 +64,28 @@ function problemMd(p: ProblemSolution): string {
 
   const chain = p.rationale_chain;
   if (chain) {
-    out.push("**Evidence chain**");
+    out.push("**Why we recommend this**");
     out.push("");
     const s = chain.stat;
     if (s?.stat_id && s.stat_id !== "(none)") {
       out.push(
-        `1. **Statistic** — \`${s.stat_id}\`: churn ${pct(s.churn_rate, 1)} over ${s.size?.toLocaleString() ?? "—"} customers` +
-          (s.p_adj != null ? `, p_adj ${s.p_adj.toFixed(4)}` : s.p_value != null ? `, p ${s.p_value.toFixed(4)}` : "") +
-          (s.significant === false ? " _(not significant after correction)_" : ""),
+        `1. **The data** — ${friendlyStat(s.stat_id)}: ${pct(s.churn_rate, 1)} of ${s.size?.toLocaleString() ?? "—"} customers left` +
+          (s.significant === false ? " _(this pattern could be chance)_" : " _(a real pattern, not chance)_"),
       );
     } else {
-      out.push("1. **Statistic** — _no matching statistical bucket_");
+      out.push("1. **The data** — _not linked to a specific customer group_");
     }
     const c = chain.cause;
-    out.push(`2. **Root cause** — ${c?.text ?? "—"}${c?.citations?.length ? ` _(cites: ${c.citations.join(", ")})_` : ""}`);
-    out.push(`3. **Tactic** — ${chain.tactic?.recommendation ?? "—"}${chain.tactic?.framework ? ` _(${chain.tactic.framework})_` : ""}`);
+    out.push(`2. **The cause** — ${c?.text ?? "—"}${c?.citations?.length ? ` _(sources: ${c.citations.join(", ")})_` : ""}`);
+    out.push(`3. **The action** — ${chain.tactic?.recommendation ?? "—"}`);
     const o = chain.simulated_outcome;
     out.push(
       o?.mean_lift != null
-        ? `4. **Simulated outcome** — mean lift ${o.mean_lift}% (p10 ${o.percentile_10 ?? "—"}%, p90 ${o.percentile_90 ?? "—"}%), prior: ${o.lift_prior_anchor ?? "—"}`
-        : "4. **Simulated outcome** — _not simulated_",
+        ? `4. **Expected impact** — about ${o.mean_lift}% more customers kept (likely range ${o.percentile_10 ?? "—"}%–${o.percentile_90 ?? "—"}%)${o.lift_prior_anchor === "rag" ? ", based on published case studies" : ""}`
+        : "4. **Expected impact** — _not estimated_",
     );
-    out.push(`5. **Risk** — ${chain.risk?.description ?? "—"}${chain.risk?.severity ? ` _(severity: ${chain.risk.severity})_` : ""}`);
-    out.push(`6. **Mitigation** — ${chain.mitigation?.description ?? "—"}`);
+    out.push(`5. **The risk** — ${chain.risk?.description ?? "—"}${chain.risk?.severity ? ` _(${chain.risk.severity} risk)_` : ""}`);
+    out.push(`6. **How to reduce it** — ${chain.mitigation?.description ?? "—"}`);
     out.push("");
   }
 
@@ -108,7 +108,7 @@ export function playbookToMarkdown(d: ReportData): string {
 
   lines.push(`# ${pb.title}`);
   lines.push("");
-  lines.push(`_${BRAND.name} retention playbook · job \`${d.jobId}\` · generated ${created}${d.demo ? " · cached demo run" : ""}_`);
+  lines.push(`_${BRAND.name} retention plan · analysis \`${d.jobId.slice(0, 8)}\` · created ${created}${d.demo ? " · demo" : ""}_`);
   lines.push("");
   lines.push("## Executive summary");
   lines.push("");
@@ -119,9 +119,9 @@ export function playbookToMarkdown(d: ReportData): string {
   const g = d.groundedness;
   if (g?.problems) {
     lines.push(
-      `**Groundedness:** ${pct(g.grounded_rate)} of problems carry all three receipts ` +
-        `(significant stat ${pct(g.stat_rate)} · citation ${pct(g.citation_rate)} · simulation ${pct(g.simulation_rate)}).` +
-        (g.unsupported.length ? ` Missing a receipt: ${g.unsupported.join("; ")}.` : ""),
+      `**Evidence score:** ${pct(g.grounded_rate)} of problems are fully backed by data, a source and a simulation ` +
+        `(data ${pct(g.stat_rate)} · source ${pct(g.citation_rate)} · simulation ${pct(g.simulation_rate)}).` +
+        (g.unsupported.length ? ` Missing some evidence: ${g.unsupported.join("; ")}.` : ""),
     );
     lines.push("");
   }
@@ -129,14 +129,13 @@ export function playbookToMarkdown(d: ReportData): string {
   const sig = d.diagnosis?.significance_summary;
   if (sig?.tests_run) {
     lines.push(
-      `**Stats gate:** ${sig.tests_run} two-proportion z-tests; ${sig.significant_after_correction ?? 0} survive ` +
-        `${sig.correction === "none" ? "raw p < 0.05" : "Benjamini-Hochberg correction"}` +
-        (sig.removed_by_correction ? ` (${sig.removed_by_correction} discarded as likely noise)` : "") + ".",
+      `**Data check:** ${sig.tests_run} customer patterns tested; ${sig.significant_after_correction ?? 0} are real` +
+        (sig.removed_by_correction ? ` and ${sig.removed_by_correction} were filtered out as likely chance` : "") + ".",
     );
     lines.push("");
   }
 
-  lines.push("## Problems & solutions");
+  lines.push("## Problems and what to do");
   lines.push("");
   for (const p of pb.problems_and_solutions ?? []) {
     lines.push(problemMd(p));
@@ -145,7 +144,7 @@ export function playbookToMarkdown(d: ReportData): string {
 
   const rm = pb["30_60_90_roadmap"];
   if (rm) {
-    lines.push("## 30 / 60 / 90 roadmap");
+    lines.push("## 30 / 60 / 90 day roadmap");
     lines.push("");
     for (const [label, ph] of [["Days 1–30", rm.phase_1_30_days], ["Days 31–60", rm.phase_2_60_days], ["Days 61–90", rm.phase_3_90_days]] as const) {
       if (!ph) continue;
@@ -163,14 +162,14 @@ export function playbookToMarkdown(d: ReportData): string {
   }
 
   if (pb.success_metrics?.length) {
-    lines.push("## Success metrics");
+    lines.push("## How to measure success");
     lines.push("");
     lines.push(table(["Metric", "Current", "Target", "How measured", "Review"],
       pb.success_metrics.map((m) => [m.metric, m.current_value, m.target_value, m.measurement_method, m.review_frequency])));
   }
 
   if (pb.risks_and_mitigations?.length) {
-    lines.push("## Risks & mitigations");
+    lines.push("## Risks and how to handle them");
     lines.push("");
     lines.push(table(["Risk", "Probability", "Mitigation", "Contingency"],
       pb.risks_and_mitigations.map((r) => [r.risk, r.probability, r.mitigation, r.contingency])));
@@ -178,7 +177,7 @@ export function playbookToMarkdown(d: ReportData): string {
 
   const res = pb.resource_requirements;
   if (res) {
-    lines.push("## Resources");
+    lines.push("## What you'll need");
     lines.push("");
     if (res.team?.length) lines.push(`- **Team:** ${res.team.join(", ")}`);
     if (res.technology?.length) lines.push(`- **Technology:** ${res.technology.join(", ")}`);
@@ -190,36 +189,36 @@ export function playbookToMarkdown(d: ReportData): string {
 
   const sim = d.simulation;
   if (sim && sim.simulated !== false && sim.interventions?.length) {
-    lines.push("## Monte Carlo simulation");
+    lines.push("## Expected impact");
     lines.push("");
-    lines.push(`${sim.iterations.toLocaleString()} draws per intervention. Combined expected lift **+${sim.expected_lift}%** (5–95%: ${sim.confidence_low}% – ${sim.confidence_high}%).`);
+    lines.push(`Each idea was tested in ${sim.iterations.toLocaleString()} simulations. Overall, we expect about **+${sim.expected_lift}%** more customers kept (likely range ${sim.confidence_low}%–${sim.confidence_high}%).`);
     lines.push("");
-    lines.push(table(["Intervention", "p10", "Mean", "p90", "Prior"],
-      sim.interventions.map((i) => [i.name, `${i.p10}%`, `${i.mean}%`, `${i.p90}%`, i.lift_prior_anchor === "rag" ? `cited (${(i.lift_prior_citations ?? []).join(", ")})` : "model estimate"])));
+    lines.push(table(["Idea", "Cautious", "Likely", "Best case", "Based on"],
+      sim.interventions.map((i) => [i.name, `${i.p10}%`, `${i.mean}%`, `${i.p90}%`, i.lift_prior_anchor === "rag" ? "published case studies" : "AI estimate"])));
   }
 
   const hyps = d.diagnosis?.merged_hypotheses ?? [];
   if (hyps.length) {
-    lines.push("## Diagnosed root causes");
+    lines.push("## Why customers leave");
     lines.push("");
-    hyps.forEach((h, i) => lines.push(`${i + 1}. ${h.hypothesis} — confidence ${pct(h.confidence)}${h.citations?.length ? ` _(cites: ${h.citations.join(", ")})_` : ""}`));
+    hyps.forEach((h, i) => lines.push(`${i + 1}. ${h.hypothesis} — confidence ${pct(h.confidence)}${h.citations?.length ? ` _(sources: ${h.citations.join(", ")})_` : ""}`));
     lines.push("");
   }
 
   const m = d.metrics;
   if (m?.llm_calls != null) {
-    lines.push("## Run telemetry");
+    lines.push("## Run details");
     lines.push("");
     lines.push(
-      `${m.llm_calls} LLM calls (${m.llm_failures ?? 0} failed, ${m.fallbacks_used ?? 0} fallbacks) · ` +
-        `${(m.total_tokens ?? 0).toLocaleString()} tokens · p50 ${m.latency_p50_s ?? "—"}s / p95 ${m.latency_p95_s ?? "—"}s per call` +
-        (m.cost_usd != null ? ` · cost $${m.cost_usd.toFixed(4)}` : ""),
+      `${m.llm_calls} AI requests · ${(m.total_tokens ?? 0).toLocaleString()} tokens processed · ` +
+        `typical response ${m.latency_p50_s ?? "—"}s` +
+        (m.cost_usd != null ? ` · cost $${m.cost_usd.toFixed(4)}` : " · free tier"),
     );
     lines.push("");
   }
 
   if (pb.reasoning_trace) {
-    lines.push("## Reasoning trace");
+    lines.push("## How the AI reached this plan");
     lines.push("");
     lines.push(pb.reasoning_trace.split("\n").map((l) => `> ${l}`).join("\n"));
     lines.push("");
@@ -227,7 +226,7 @@ export function playbookToMarkdown(d: ReportData): string {
 
   lines.push("---");
   lines.push("");
-  lines.push(`_Generated by ${BRAND.name}. Every statistic comes from your data; lift estimates are simulated ranges, not guarantees._`);
+  lines.push(`_Generated by ${BRAND.name}. Every number comes from your data; impact estimates are simulated ranges, not guarantees._`);
   return lines.join("\n").replace(/\n{3,}/g, "\n\n") + "\n";
 }
 

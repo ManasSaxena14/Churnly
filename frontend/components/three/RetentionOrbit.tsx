@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
+import { DENSITY, FrameGovernor, detectTier, initialPixelRatio, wantsAntialias } from "./quality";
 
 /* Hero scene — every particle is a customer in orbit around your product.
    ~15% are churners: they spiral outward and fade. `retainRef.current`
@@ -104,16 +105,25 @@ export function RetentionOrbit({
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const small = window.innerWidth < 768;
+    const tier = detectTier();
+    const density = DENSITY[tier];
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({
+        antialias: wantsAntialias(initialPixelRatio(tier)), alpha: true, powerPreference: "high-performance",
+      });
     } catch {
       mount.dataset.fallback = "true"; // CSS gradient fallback takes over
       return;
     }
-    const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    const pixelRatio = initialPixelRatio(tier);
     renderer.setPixelRatio(pixelRatio);
+    const governor = new FrameGovernor(pixelRatio);
+    // Background tabs don't need frames at all.
+    let pageVisible = !document.hidden;
+    const onVis = () => { pageVisible = !document.hidden; };
+    document.addEventListener("visibilitychange", onVis);
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
     renderer.domElement.style.width = "100%";
@@ -130,7 +140,7 @@ export function RetentionOrbit({
     scene.add(world);
 
     // ── particles ───────────────────────────────────────────────
-    const COUNT = small ? 3200 : 7000;
+    const COUNT = Math.round((small ? 3200 : 7000) * density);
     const geo = new THREE.BufferGeometry();
     const radius = new Float32Array(COUNT);
     const angle = new Float32Array(COUNT);
@@ -251,9 +261,13 @@ export function RetentionOrbit({
     const clock = new THREE.Clock();
     let raf = 0;
     let retainSmoothed = 0;
+    let lastFrame = performance.now();
     const frame = () => {
       raf = requestAnimationFrame(frame);
-      if (!visible) return;
+      const nowMs = performance.now();
+      const dt = (nowMs - lastFrame) / 1000;
+      lastFrame = nowMs;
+      if (!visible || !pageVisible) return;
       const t = clock.getElapsedTime();
       uniforms.uTime.value = reduced ? 12 : t;
       const target = retainRef?.current ?? 0;
@@ -269,6 +283,12 @@ export function RetentionOrbit({
       (glowMat.uniforms.uIntensity as { value: number }).value = 1.2 + retainSmoothed * 0.8;
       halo.material.opacity = 0.75 + retainSmoothed * 0.25;
       renderer.render(scene, camera);
+      const lower = governor.sample(dt);
+      if (lower !== null) {
+        renderer.setPixelRatio(lower);
+        uniforms.uPixelRatio.value = lower;
+        resize();
+      }
     };
     if (reduced) {
       renderer.render(scene, camera);
@@ -277,6 +297,7 @@ export function RetentionOrbit({
 
     return () => {
       cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVis);
       ro.disconnect();
       io.disconnect();
       window.removeEventListener("pointermove", onMove);

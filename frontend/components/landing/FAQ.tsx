@@ -9,28 +9,28 @@ import { cn } from "@/lib/utils";
 
 const QA = [
   {
-    q: "What does my CSV need?",
-    a: "One row per customer, a 0/1 (or yes/no) churn column and a tenure / months-active column. Usage, support tickets, plan, contract and acquisition channel are picked up automatically — and you confirm every column's role before the analysis starts.",
+    q: "What does my data need to include?",
+    a: "A CSV with one row per customer. It needs a column that says whether the customer left (yes/no or 1/0) and a column for how long they've been a customer. Anything else — usage, support tickets, plan, contract type, sign-up channel — is picked up automatically, and you confirm what each column means before the analysis starts.",
   },
   {
-    q: "How is this different from pasting my data into ChatGPT?",
-    a: "The language models never see raw rows and never get to invent a cause. Survival models and Benjamini-Hochberg-corrected significance tests run first; agents may only build causes on segments that survive, a skeptic agent can veto tactics, and lift numbers come from simulation with cited priors.",
+    q: "How is this different from pasting my data into an AI chatbot?",
+    a: "A chatbot can make up causes and numbers that sound convincing. Churnly runs proven statistics first and only lets the AI explain patterns that are real. A separate AI reviewer challenges every idea, and expected results come from simulations based on published case studies.",
   },
   {
     q: "How long does an analysis take?",
-    a: "A quick scan takes about 2–4 minutes on the fast models. Deep analysis runs a three-way self-consistency vote and a two-pass playbook on stronger models — about 10–20 minutes.",
+    a: "A quick analysis takes about 2–4 minutes. A deep analysis double-checks the diagnosis three times and uses stronger AI models, so it takes about 10–20 minutes.",
   },
   {
-    q: "How do you know it's accurate?",
-    a: "An eval harness generates datasets with churn drivers we plant on purpose, then scores what gets found. With multiple-testing correction, false positives drop from 16.3% to 6.0% across 50 datasets. The numbers on this page come straight from it.",
+    q: "How do you know the results are accurate?",
+    a: "We test Churnly on customer datasets where we already know the real reasons people leave, and measure how often it finds them. Across 50 test datasets, our false-alarm filter cut wrong findings from 16.3% to 6.0%. The numbers on this page come straight from those tests.",
   },
   {
     q: "Where does my data go?",
-    a: `Your CSV is stored only on the server you run ${BRAND.name} on, in a temp folder. Saved runs keep aggregated statistics and the playbook, never the raw rows. The analysis agents receive summary statistics, not customer records; the copilot runs read-only SQL and can pass up to 50 result rows to the LLM when you ask about specific customers.`,
+    a: `Your file stays on the server you run ${BRAND.name} on. Saved analyses keep summaries and the final plan, never your raw customer rows. The AI agents work from summary statistics; only the Ask ${BRAND.name} assistant may look at up to 50 rows when you ask about specific customers.`,
   },
   {
-    q: "Can I share the result?",
-    a: "Yes — export the playbook as Markdown or as a print-ready PDF report with every evidence chain, the 30-60-90 roadmap, success metrics and risks.",
+    q: "Can I share the results?",
+    a: "Yes. Export the plan as a PDF report or a Markdown file, including the evidence behind each recommendation, the 30-60-90 day roadmap, success metrics and risks.",
   },
 ];
 

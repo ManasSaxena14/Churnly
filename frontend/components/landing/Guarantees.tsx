@@ -8,28 +8,28 @@ import { SplitReveal, Tilt } from "@/components/motion";
 
 const ITEMS = [
   {
-    icon: Sigma, title: "Every stat is z-test gated",
-    body: "Each churn bucket is tested against the rest of the population and Benjamini-Hochberg corrected. Prompts refuse to build a cause on anything that isn't significant.",
+    icon: Sigma, title: "Only real patterns count",
+    body: "Every customer group is tested against everyone else, and anything that could be chance is filtered out. The AI is only allowed to explain patterns that pass.",
   },
   {
-    icon: Scale, title: "The diagnosis votes with itself",
-    body: "Deep mode runs the root-cause prompt three times at different temperatures. A cause only ships if two of three independent runs agree.",
+    icon: Scale, title: "Causes are double-checked",
+    body: "In deep mode the diagnosis runs three separate times. A cause only makes it into your report if at least two of the three runs agree on it.",
   },
   {
-    icon: ShieldAlert, title: "A second AI is paid to disagree",
-    body: "An adversarial skeptic scores every tactic. A high-severity flag is an automatic constraint violation at the critic gate — no override.",
+    icon: ShieldAlert, title: "Every idea gets challenged",
+    body: "A separate AI reviewer's only job is to find weak spots. If it flags a serious problem with an idea, that idea doesn't make the plan.",
   },
   {
-    icon: Dices, title: "Lift numbers are cited, not invented",
-    body: "Monte Carlo priors come from case-study ranges retrieved from the knowledge base, falling back to the model's own estimate only when nothing citable exists.",
+    icon: Dices, title: "Impact numbers have sources",
+    body: "Expected results come from simulations based on published case studies — not from an AI guessing a number. When no source exists, we say so.",
   },
   {
-    icon: FlaskConical, title: "Measured against planted truth",
-    body: "An eval harness generates datasets with churn drivers we hide on purpose, then scores precision, recall and false alarms. The numbers on this page come from it.",
+    icon: FlaskConical, title: "Tested against known answers",
+    body: "We build test datasets where we already know the real causes of churn, then measure how often we find them. The numbers on this page come from those tests.",
   },
   {
-    icon: BadgeCheck, title: "Every claim has a receipt",
-    body: "Each playbook problem carries a rationale chain and a groundedness check: real stat, real citation, real simulation — or it's flagged as unsupported.",
+    icon: BadgeCheck, title: "Every recommendation shows its proof",
+    body: "Each problem in your plan links to the data behind it, a cited source and a simulated result. Anything missing a piece is clearly marked.",
   },
 ];
 
@@ -52,7 +52,7 @@ export function Guarantees() {
     <section ref={root} id="why" className="relative mx-auto max-w-7xl px-4 py-28 sm:px-8">
       <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Why it&apos;s different</p>
       <SplitReveal className="mt-3 max-w-3xl font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[48px]">
-        Every LLM claim is <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">guilty</span> until proven significant.
+        No guesswork. <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">Every claim</span> is checked.
       </SplitReveal>
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ITEMS.map(({ icon: Icon, title, body }) => (

@@ -76,7 +76,7 @@ def _prewarm_rag() -> None:
 
     threading.Thread(target=_warm, daemon=True, name="rag-prewarm").start()
 
-# Comma-separated list, e.g. "https://retainiq.vercel.app,http://localhost:3000".
+# Comma-separated list, e.g. "https://churnly.vercel.app,http://localhost:3000".
 # Defaults to "*" for local dev; set it in production.
 _allowed_origins = [o.strip() for o in (os.getenv("ALLOWED_ORIGINS") or "*").split(",") if o.strip()]
 app.add_middleware(

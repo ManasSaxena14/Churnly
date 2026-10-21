@@ -75,10 +75,10 @@ export function RationaleChainStrip({ chain }: { chain: RationaleChain }) {
           <Line className="tnum">
             +{Number(chain.simulated_outcome.mean_lift).toFixed(1)}% mean lift
             {chain.simulated_outcome.percentile_10 != null && chain.simulated_outcome.percentile_90 != null && (
-              <> · p10–p90 {Number(chain.simulated_outcome.percentile_10).toFixed(1)}–{Number(chain.simulated_outcome.percentile_90).toFixed(1)}%</>
+              <> · likely range {Number(chain.simulated_outcome.percentile_10).toFixed(1)}–{Number(chain.simulated_outcome.percentile_90).toFixed(1)}%</>
             )}
           </Line>
-          {anchor && <Meta>prior · {anchor === "rag" ? "RAG-anchored" : "self-reported"}</Meta>}
+          {anchor && <Meta>{anchor === "rag" ? "based on published case studies" : "AI estimate — no published source"}</Meta>}
         </>
       ),
     });
@@ -102,8 +102,8 @@ export function RationaleChainStrip({ chain }: { chain: RationaleChain }) {
   return (
     <div className="mt-4 rounded-lg border border-white/6 bg-white/[0.015] px-4 py-3.5">
       <div className="mb-3 flex flex-wrap items-baseline gap-3">
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-50">Rationale chain</span>
-        <span className="text-[10px] tracking-[0.04em] text-zinc-500">stat → cause → tactic → outcome → risk → mitigation</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-50">Why we recommend this</span>
+        <span className="text-[10px] tracking-[0.04em] text-zinc-500">data → cause → action → impact → risk → safeguard</span>
       </div>
       <ol className="relative flex flex-col before:absolute before:bottom-1.5 before:left-[5px] before:top-1.5 before:w-px before:bg-white/6">
         {steps.map((step, i) => (

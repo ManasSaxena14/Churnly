@@ -16,7 +16,8 @@ from app.runs import load_demo, load_run
 from app.stats.survival import CoxModel, fit_cox
 
 _BACKEND_ROOT = pathlib.Path(__file__).resolve().parents[2]
-_SAMPLE_DIR = _BACKEND_ROOT / "dataForTesting"
+# Where bundled sample CSVs may live (the demo dataset ships in frontend/public).
+_SAMPLE_DIRS = (_BACKEND_ROOT / "dataForTesting", _BACKEND_ROOT.parent / "frontend" / "public")
 
 # Columns that look like money — used for "revenue at risk".
 _VALUE_HINTS = ("mrr", "arr", "revenue", "ltv", "spend", "monthly_charges", "monthlycharges", "value", "price")
@@ -50,9 +51,10 @@ def _resolve_path(meta: dict[str, Any]) -> str | None:
     # Promoted demo runs point at a temp file from another machine; fall back
     # to the bundled sample with the same name so the demo stays interactive.
     name = os.path.basename(meta.get("dataset_name") or raw or "")
-    sample = _SAMPLE_DIR / name
-    if name and sample.exists():
-        return str(sample)
+    for folder in _SAMPLE_DIRS:
+        sample = folder / name
+        if name and sample.exists():
+            return str(sample)
     return None
 
 

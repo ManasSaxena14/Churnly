@@ -19,7 +19,7 @@ Called by `forensic_detective_node` (the thin wrapper in `nodes/`). `job_id` is 
 | | |
 |---|---|
 | Provider | Google Gemini |
-| Model ID | `gemini_model(depth, deep_call=True)` — `gemini-3.1-flash-lite` in quick mode, `gemini-3.5-flash` in deep mode (`app/config.py`) |
+| Model ID | `gemini_model(depth, deep_call=True)` — `gemini-3.1-flash-lite` in quick mode, `gemini-3-flash-preview` in deep mode (`app/config.py`) |
 | Temps | `[0.3]` in quick mode; `[0.2, 0.5, 0.7]` for the 3 self-consistency runs in deep mode |
 | Keys | Round-robin across all `GOOGLE_API_KEY[_N]` via `FailoverLLM` |
 | Structured output | `safe_llm_invoke` — retries the structured call once, then falls back to raw-JSON parse with the schema appended to the prompt |

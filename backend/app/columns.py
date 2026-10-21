@@ -29,14 +29,18 @@ ROLES = ("churn", "tenure", "customer_id", "usage", "support", "plan", "contract
 REQUIRED_ROLES = ("churn", "tenure")
 
 ROLE_LABELS = {
-    "churn": "Churn flag (0 = active, 1 = churned)",
-    "tenure": "Tenure / months active",
+    "churn": "Did the customer leave? (yes/no)",
+    "tenure": "How long they've been a customer",
     "customer_id": "Customer ID",
-    "usage": "Usage / logins",
+    "usage": "Usage or logins",
     "support": "Support tickets",
-    "plan": "Plan tier",
+    "plan": "Plan",
     "contract": "Contract length",
-    "channel": "Acquisition channel",
+    "channel": "Where they came from",
+}
+_REQUIRED_HINT = {
+    "churn": "Choose the column that shows whether each customer left — the analysis needs it.",
+    "tenure": "Choose the column that shows how long each customer has been with you — the analysis needs it.",
 }
 
 _TRUE = {"1", "true", "yes", "y", "t", "churned", "cancelled", "canceled"}
@@ -89,20 +93,20 @@ def _churn_values(series: pd.Series) -> tuple[pd.Series | None, str | None]:
     """Return a 0/1 int series, or (None, reason) if it can't be read as churn."""
     s = series.dropna()
     if s.empty:
-        return None, "column is empty"
+        return None, "it's empty"
     if pd.api.types.is_bool_dtype(s):
         return series.astype("float").astype("Int64"), None
     if pd.api.types.is_numeric_dtype(s):
         uniq = set(pd.unique(s))
         if uniq.issubset({0, 1, 0.0, 1.0}):
             return series.astype("Int64"), None
-        return None, f"numeric values other than 0/1 (e.g. {sorted(uniq)[:4]})"
+        return None, f"it should only contain 0 and 1, but has values like {sorted(uniq)[:4]}"
     text = s.astype(str).str.strip().str.lower()
     uniq = set(text.unique())
     if uniq.issubset(_TRUE | _FALSE):
         mapped = series.astype(str).str.strip().str.lower().map(lambda v: 1 if v in _TRUE else (0 if v in _FALSE else None))
         return mapped.astype("Int64"), None
-    return None, f"text values that don't look like yes/no (e.g. {sorted(uniq)[:4]})"
+    return None, f"it should contain yes/no values, but has values like {sorted(uniq)[:4]}"
 
 
 def validate(df: pd.DataFrame, resolved: dict[str, str | None]) -> dict[str, Any]:
@@ -113,49 +117,49 @@ def validate(df: pd.DataFrame, resolved: dict[str, str | None]) -> dict[str, Any
 
     for role in REQUIRED_ROLES:
         if not resolved.get(role):
-            errors.append(f"Pick a column for {ROLE_LABELS[role].split(' (')[0].lower()} — the survival model needs it.")
+            errors.append(_REQUIRED_HINT[role])
 
     used = [c for c in resolved.values() if c]
     dupes = sorted({c for c in used if used.count(c) > 1})
     if dupes:
-        errors.append(f"Each column can only play one role: {', '.join(dupes)}")
+        errors.append(f"Each column can only be used once. Used more than once: {', '.join(dupes)}")
 
     churn_col = resolved.get("churn")
     if churn_col:
         values, reason = _churn_values(df[churn_col])
         if values is None:
-            errors.append(f"'{churn_col}' can't be the churn flag: {reason}.")
+            errors.append(f"'{churn_col}' can't show whether customers left — {reason}.")
         else:
             rate = float(values.mean())
             summary["churn_rate"] = round(rate, 4)
             summary["churn_needs_normalizing"] = needs_churn_normalizing(df, churn_col)
             if rate in (0.0, 1.0):
-                errors.append(f"'{churn_col}' has only one value — nothing to compare churned vs retained customers on.")
+                errors.append(f"In '{churn_col}', every customer has the same value — we need both customers who left and customers who stayed.")
             elif rate < 0.02 or rate > 0.98:
-                warnings.append(f"Churn rate is {rate:.1%} — results will be noisy with so few {'churners' if rate < 0.5 else 'retained customers'}.")
+                warnings.append(f"Only {rate:.1%} of customers {'left' if rate < 0.5 else 'stayed'} — results may be less reliable with so few.")
 
     tenure_col = resolved.get("tenure")
     if tenure_col:
         t = pd.to_numeric(df[tenure_col], errors="coerce")
         if t.notna().mean() < 0.9:
-            errors.append(f"'{tenure_col}' isn't numeric — tenure must be a number of months (or days).")
+            errors.append(f"'{tenure_col}' should contain numbers, like months or days as a customer.")
         else:
             if (t < 0).any():
-                errors.append(f"'{tenure_col}' has negative values.")
+                errors.append(f"'{tenure_col}' has negative values — time as a customer can't be below zero.")
             summary["tenure_min"] = float(t.min())
             summary["tenure_max"] = float(t.max())
 
     for role in ("usage", "support"):
         col = resolved.get(role)
         if col and pd.to_numeric(df[col], errors="coerce").notna().mean() < 0.9:
-            warnings.append(f"'{col}' ({role}) isn't numeric — it will be skipped for {role} buckets.")
+            warnings.append(f"'{col}' should contain numbers, so it will be left out of the {role} analysis.")
     for role in ("plan", "contract", "channel"):
         col = resolved.get(role)
         if col and df[col].nunique(dropna=True) > 30:
-            warnings.append(f"'{col}' has {df[col].nunique()} distinct values — that's a lot of segments for '{role}'.")
+            warnings.append(f"'{col}' has {df[col].nunique()} different values — that may be too many groups to compare.")
 
     if len(df) < 100:
-        warnings.append(f"Only {len(df)} rows — significance tests will rarely pass correction on a sample this small.")
+        warnings.append(f"Only {len(df)} customers — with this few, it's hard to find patterns we can be confident in.")
 
     return {"errors": errors, "warnings": warnings, "summary": summary}
 

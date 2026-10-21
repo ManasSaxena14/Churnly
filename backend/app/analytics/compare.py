@@ -15,6 +15,7 @@ import numpy as np
 
 from app.analytics.dataset import RunDataset
 from app.stats import benjamini_hochberg, compute_bucket_stats, two_proportion_pvalue
+from app.stats.labels import friendly_stat
 
 _FAMILIES = (
     "churn_by_plan_tier", "churn_by_contract", "churn_by_channel", "churn_by_integration",
@@ -57,6 +58,7 @@ def compare_runs(a: RunDataset, b: RunDataset) -> dict[str, Any]:
         ra, rb = ba[sid]["churn_rate"], bb[sid]["churn_rate"]
         segments.append({
             "stat_id": sid,
+            "label": friendly_stat(sid),
             "churn_a": ra, "churn_b": rb,
             "delta_pp": round((rb - ra) * 100, 2),
             "size_a": ba[sid]["size"], "size_b": bb[sid]["size"],
@@ -86,19 +88,21 @@ def compare_runs(a: RunDataset, b: RunDataset) -> dict[str, Any]:
     sig = [s for s in segments if s["significant"]]
     outliers = [s for s in sig if abs(s["excess_pp"]) >= 3]
     headline = []
+    real = overall_p is not None and overall_p < 0.05
     headline.append(
-        f"Overall churn {'rose' if rate_b > rate_a else 'fell'} {abs(rate_b - rate_a) * 100:.1f} pp "
-        f"({rate_a:.1%} → {rate_b:.1%}){' — significant' if overall_p is not None and overall_p < 0.05 else ' — within noise'}."
+        f"Overall, {'more' if rate_b > rate_a else 'fewer'} customers left: {rate_a:.1%} → {rate_b:.1%} "
+        f"({'a real change' if real else 'this could be chance'})."
     )
     for s in outliers[:3]:
+        more = s["excess_pp"] > 0
         headline.append(
-            f"{s['stat_id']}: {s['churn_a']:.0%} → {s['churn_b']:.0%} ({s['delta_pp']:+.1f} pp, "
-            f"{s['excess_pp']:+.1f} pp beyond the overall shift; p_adj {s['p_adj']})."
+            f"{s['label']}: {s['churn_a']:.0%} → {s['churn_b']:.0%} of customers left — "
+            f"{abs(s['excess_pp']):.1f} points {'worse' if more else 'better'} than the overall change."
         )
     if sig and not outliers:
-        headline.append("Segments moved together with overall churn — no single segment stands out.")
+        headline.append("Customer groups changed in line with the overall trend — no single group stands out.")
     if not sig:
-        headline.append("No segment changed beyond what chance explains after BH correction.")
+        headline.append("No customer group changed more than chance would explain.")
 
     def run_card(ds: RunDataset) -> dict[str, Any]:
         meta = ds.run.get("meta") or {}

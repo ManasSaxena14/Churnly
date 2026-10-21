@@ -5,36 +5,31 @@ import { useId } from "react";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-/* Churnly mark: three roots (your data, the stats, the agents) converge on
-   one node, and a single stem rises to the insight — an agent graph that
-   anchors your customers. */
-export function LogoMark({ className }: { className?: string }) {
+/* Churnly mark: a ring (your customer base) shaped like a "C", with the gap
+   where customers churn out. The glowing dot sits in that gap and closes the
+   loop: the customer you kept. The inner core is the product they orbit.
+   Geometry: r=11 arc from 5° to 295° (gap centred at -30°), dot at -30°. */
+export function LogoMark({ className, animated = false }: { className?: string; animated?: boolean }) {
   const id = useId().replace(/:/g, "");
   return (
     <svg viewBox="0 0 32 32" className={cn("h-7 w-7", className)} aria-hidden="true">
       <defs>
-        <linearGradient id={`hf-g-${id}`} x1="0" y1="1" x2="0.6" y2="0">
+        <linearGradient id={`ch-ring-${id}`} x1="0.1" y1="0.9" x2="0.9" y2="0.1">
           <stop offset="0%" stopColor="#5eead4" />
           <stop offset="55%" stopColor="#818cf8" />
           <stop offset="100%" stopColor="#e879f9" />
         </linearGradient>
-        <radialGradient id={`hf-r-${id}`}>
-          <stop offset="0%" stopColor="#fff" />
+        <radialGradient id={`ch-glow-${id}`}>
+          <stop offset="0%" stopColor="#f5d0fe" stopOpacity="0.9" />
           <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <g fill="none" stroke={`url(#hf-g-${id})`} strokeWidth="1.8" strokeLinecap="round">
-        <path d="M6.5 27 C 8 22, 12 21, 16 19.2" />
-        <path d="M16 28.5 L16 19.2" />
-        <path d="M25.5 27 C 24 22, 20 21, 16 19.2" />
-        <path d="M16 19.2 C 16 14, 17.6 10.5, 16 6.2" />
+      <path d="M26.96 16.96 A11 11 0 1 1 20.65 6.03" fill="none" stroke={`url(#ch-ring-${id})`} strokeWidth="3.4" strokeLinecap="round" />
+      <circle cx="16" cy="16" r="3.4" fill={`url(#ch-ring-${id})`} opacity="0.9" />
+      <g className={animated ? "origin-[16px_16px] animate-[logo-dot_3.2s_ease-in-out_infinite]" : undefined}>
+        <circle cx="25.53" cy="10.5" r="5" fill={`url(#ch-glow-${id})`} />
+        <circle cx="25.53" cy="10.5" r="2.6" fill="#fdf4ff" />
       </g>
-      <circle cx="6.5" cy="27" r="1.6" fill="#5eead4" />
-      <circle cx="16" cy="28.5" r="1.6" fill="#5eead4" />
-      <circle cx="25.5" cy="27" r="1.6" fill="#5eead4" />
-      <circle cx="16" cy="19.2" r="3.3" fill={`url(#hf-g-${id})`} />
-      <circle cx="16" cy="5.6" r="4.2" fill={`url(#hf-r-${id})`} opacity="0.55" />
-      <circle cx="16" cy="5.6" r="2" fill="#f5d0fe" />
     </svg>
   );
 }
@@ -48,10 +43,10 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ href = "/", className, compact }: { href?: string; className?: string; compact?: boolean }) {
+export function Logo({ href = "/", className, compact, animated = true }: { href?: string; className?: string; compact?: boolean; animated?: boolean }) {
   return (
     <Link href={href} className={cn("group inline-flex items-center gap-2", className)} aria-label={`${BRAND.name} home`}>
-      <LogoMark className="transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:scale-110" />
+      <LogoMark animated={animated} className="transition-transform duration-700 ease-out group-hover:rotate-[-24deg] group-hover:scale-110" />
       {!compact && <Wordmark className="text-[18px]" />}
     </Link>
   );

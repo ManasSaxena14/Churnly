@@ -65,13 +65,13 @@ export function ProductPreview() {
   return (
     <section ref={root} id="product" className="relative mx-auto max-w-7xl px-4 py-28 sm:px-8">
       <div className="mx-auto max-w-3xl text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">The output</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">What you get</p>
         <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[48px]">
-          From raw CSV to a <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">board-ready</span> playbook.
+          From a spreadsheet to a <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">clear plan</span>.
         </SplitReveal>
         <p className="mx-auto mt-5 max-w-xl text-[15px] leading-[1.75] text-zinc-400">
-          Every stage streams to your screen as it finishes — survival curves first, then voted root
-          causes, simulated lift, and a 30-60-90 plan you can export to PDF.
+          Results appear as each step finishes — how long customers stay, why they leave, what
+          to do about it, and a 30-60-90 day plan you can export as a PDF.
         </p>
       </div>
 
@@ -85,15 +85,15 @@ export function ProductPreview() {
             <div className="mx-auto flex items-center gap-2 rounded-md bg-white/[0.04] px-3 py-1 font-mono text-[10.5px] text-zinc-500">
               <LogoMark className="h-3.5 w-3.5" /> churnly / results / 7f3a…
             </div>
-            <span data-pp="badge" className="rounded-full bg-emerald-400/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-300">grounded 100%</span>
+            <span data-pp="badge" className="rounded-full bg-emerald-400/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-300">100% evidence-backed</span>
           </div>
 
           <div className="grid gap-3 p-4 md:grid-cols-[1.25fr_1fr] md:p-5">
             {/* KM curve card */}
             <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
               <div className="flex items-baseline justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-300">Survival · Kaplan-Meier</span>
-                <span className="font-mono text-[10px] text-zinc-500">median 17 mo</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-300">How long customers stay</span>
+                <span className="font-mono text-[10px] text-zinc-500">half leave by month 17</span>
               </div>
               <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="mt-3 h-[150px] w-full overflow-visible">
                 <defs>
@@ -111,7 +111,7 @@ export function ProductPreview() {
                 <path data-pp="km" d={kmPath} fill="none" stroke="url(#pp-km-line)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
               </svg>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                {[["At risk", "1,284"], ["C-index", "0.74"], ["Tests kept", "9 / 24"]].map(([k, v]) => (
+                {[["At risk", "1,284"], ["Model accuracy", "74%"], ["Real patterns", "9 of 24"]].map(([k, v]) => (
                   <div key={k} data-pp="stat" className="rounded-lg bg-white/[0.03] px-2.5 py-2">
                     <div className="text-[9.5px] uppercase tracking-[0.1em] text-zinc-500">{k}</div>
                     <div className="font-display text-[17px] font-semibold text-zinc-50">{v}</div>
@@ -123,13 +123,13 @@ export function ProductPreview() {
             {/* drivers + causes */}
             <div className="flex flex-col gap-3">
               <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-300">Hazard drivers · BH-corrected</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-300">What raises churn</span>
                 <div className="mt-3 flex flex-col gap-2.5">
                   {DRIVERS.map((d) => (
                     <div key={d.k}>
                       <div className="flex justify-between font-mono text-[10.5px]">
                         <span className={d.ns ? "text-zinc-600" : "text-zinc-300"}>{d.k}</span>
-                        <span className={d.ns ? "text-zinc-600" : "text-zinc-400"}>HR {d.hr}{d.ns ? " · n.s." : ""}</span>
+                        <span className={d.ns ? "text-zinc-600" : "text-zinc-400"}>{d.ns ? "not significant" : `${d.hr}× risk`}</span>
                       </div>
                       <div className="mt-1 h-1.5 rounded-full bg-white/[0.04]">
                         <div data-pp="bar" className={`h-full rounded-full ${d.ns ? "bg-zinc-700" : "bg-gradient-to-r from-brand-2 to-brand-3"}`} style={{ width: `${d.w * 100}%` }} />
@@ -139,13 +139,13 @@ export function ProductPreview() {
                 </div>
               </div>
               <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fuchsia-300">Root causes · voted</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-fuchsia-300">Main causes</span>
                 <div className="mt-2.5 flex flex-col gap-2">
                   {CAUSES.map((c, i) => (
                     <div key={c.t} data-pp="cause" className="flex items-center gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2">
                       <span className="grid h-5 w-5 place-items-center rounded-full bg-fuchsia-400/15 text-[10px] font-bold text-fuchsia-300">{i + 1}</span>
                       <span className="flex-1 text-[12px] text-zinc-200">{c.t}</span>
-                      <span className="font-mono text-[10px] text-zinc-500">{c.votes} · {Math.round(c.c * 100)}%</span>
+                      <span className="font-mono text-[10px] text-zinc-500">{c.votes} agree</span>
                     </div>
                   ))}
                 </div>

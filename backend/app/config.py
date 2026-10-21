@@ -56,7 +56,10 @@ _GROQ_KEYS:   list[str] = _discover_keys("GROQ_API_KEY")
 # call in ~2s. Lite thinks OFF by default — do NOT pass thinking_level to it.
 # Override with env vars if your key doesn't have access to these models.
 GEMINI_FAST_MODEL = os.getenv("GEMINI_FAST_MODEL", "gemini-3.1-flash-lite")  # every structured/shallow call
-GEMINI_DEEP_MODEL = os.getenv("GEMINI_DEEP_MODEL", "gemini-3.5-flash")       # deep mode only: reasoning-heavy calls
+# Both defaults are on the Gemini API free tier (Pro models are paid-only).
+# If a model ever disappears or loses free access, the fallback chain drops
+# to the fast model, then to Groq.
+GEMINI_DEEP_MODEL = os.getenv("GEMINI_DEEP_MODEL", "gemini-3-flash-preview")  # deep mode only: reasoning-heavy calls
 # Groq shootout 2026-07-07: gpt-oss-120b beat llama-3.3-70b on answer depth
 # (cites HR/p/significance correctly) at ~3s for 4k-token prompts. It rejects
 # forced tool-choice, so structured output must use method="json_schema" —

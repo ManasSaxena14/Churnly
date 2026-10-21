@@ -271,10 +271,11 @@ export function useAnalysisStream(jobId: string) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
-  /* Live tick while job runs, freezes once complete. */
+  /* Live tick while job runs (timers show whole seconds, so 1s is enough);
+     stops once the run ends for any reason. */
   useEffect(() => {
-    if (connectionStatus === "complete") return;
-    const id = setInterval(() => setNow(Date.now()), 500);
+    if (connectionStatus === "complete" || connectionStatus === "error" || connectionStatus === "cancelled") return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [connectionStatus]);
 

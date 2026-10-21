@@ -111,8 +111,8 @@ export function ChurnProfileSection({ data, ctx, visible }: { data: ChurnProfile
   return (
     <Section
       tone="blue"
-      title="Churn Profile"
-      meta={data.median_survival_time != null ? `median survival · mo. ${data.median_survival_time}` : undefined}
+      title="How long customers stay"
+      meta={data.median_survival_time != null ? `half of customers leave by month ${data.median_survival_time}` : undefined}
       visible={visible}
     >
       {/* Two columns of equal height: probability card left, milestone grid +
@@ -162,7 +162,7 @@ export function ChurnProfileSection({ data, ctx, visible }: { data: ChurnProfile
               {skippedFlat.length > 0 && (
                 <span
                   className="cursor-help text-[10px] font-medium normal-case tracking-[0.04em] text-zinc-400"
-                  title={`Months ${skippedFlat.join(", ")} skipped — KM curve is flat past month ${maxObserved} (no new churn events observed beyond that point).`}
+                  title={`Months ${skippedFlat.join(", ")} not shown — nobody in your data left after month ${maxObserved}.`}
                 >
                   · curve flat past mo. {maxObserved}
                 </span>

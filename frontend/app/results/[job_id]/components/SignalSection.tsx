@@ -11,24 +11,24 @@ export function SignalSection({ data, visible }: { data: RiskData; ctx: Ctx; vis
   return (
     <Section
       tone="amber"
-      title="Signal"
-      meta={`${data.total_active.toLocaleString()} active users · risk model ${data.confidence}% conf.`}
+      title="Risk overview"
+      meta={`${data.total_active.toLocaleString()} active customers · model accuracy ${data.confidence}%`}
       visible={visible}
     >
       <div className={cn("grid gap-3", fs ? "grid-cols-5" : "grid-cols-3")}>
-        <Stat label="High risk users" tone="amber" value={data.high_risk_count.toLocaleString()} sub={`of ${data.total_active.toLocaleString()} active`} />
-        <Stat label="At risk" tone="amber" value={`${data.risk_pct.toFixed(1)}%`} sub="of user base" />
-        <Stat label="Confidence" value={`${data.confidence}%`} sub="concordance index" />
+        <Stat label="Customers at high risk" tone="amber" value={data.high_risk_count.toLocaleString()} sub={`of ${data.total_active.toLocaleString()} active`} />
+        <Stat label="At risk" tone="amber" value={`${data.risk_pct.toFixed(1)}%`} sub="of active customers" />
+        <Stat label="Model accuracy" value={`${data.confidence}%`} sub="how well it ranks risk" />
         {ltvMean != null && (
           <Stat
-            label="Mean LTV"
+            label="Average lifetime value"
             value={`$${Math.round(ltvMean).toLocaleString()}`}
             sub={ltvMed != null ? `median $${Math.round(ltvMed).toLocaleString()}` : undefined}
           />
         )}
         {fs?.velocity_metrics?.avg_logins_per_month != null && (
           <Stat
-            label="Avg logins / mo"
+            label="Avg. logins per month"
             tone="blue"
             value={fs.velocity_metrics.avg_logins_per_month}
             sub={fs.velocity_metrics.drop_off_at_day != null ? `drop-off day ${fs.velocity_metrics.drop_off_at_day}` : undefined}

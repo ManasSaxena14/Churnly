@@ -105,7 +105,7 @@ export interface CompareResult {
   overall: { churn_a: number; churn_b: number; delta_pp: number; p_value: number | null };
   headline: string[];
   km: { a: { t: number; s: number }[]; b: { t: number; s: number }[] };
-  segments: { stat_id: string; churn_a: number; churn_b: number; delta_pp: number; excess_pp: number; size_a: number; size_b: number; p_adj: number | null; significant: boolean }[];
+  segments: { stat_id: string; label?: string; churn_a: number; churn_b: number; delta_pp: number; excess_pp: number; size_a: number; size_b: number; p_adj: number | null; significant: boolean }[];
   drivers: { feature: string; hr_a: number; hr_b: number; change: number }[];
   tests_run: number; significant_changes: number;
 }

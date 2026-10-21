@@ -36,7 +36,7 @@ export function StatusBar({
             {fmtElapsed((complete && jobEndTs ? jobEndTs : now) - jobStartTs)}
           </span>
         )}
-        <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">SSE · {completedCount} / 6 events</span>
+        <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">{completedCount} of 6 steps done</span>
         {!complete && connectionStatus !== "cancelled" && connectionStatus !== "error" && (
           <StatusBtn variant="danger" onClick={onCancel} disabled={isCancelling} title="Cancel the running analysis">
             {isCancelling ? "■ Cancelling…" : "■ Cancel"}
@@ -71,7 +71,7 @@ export function AnalysisStatusBanner({
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <strong className={cn("font-semibold tracking-[0.01em]", isError ? "text-rose-200" : "text-slate-200")}>
-          {isError ? "Analysis failed" : "Analysis cancelled"}
+          {isError ? "The analysis stopped" : "Analysis cancelled"}
         </strong>
         {isError && errorInfo && (
           <span className="text-[11.5px] text-zinc-400">
@@ -80,7 +80,7 @@ export function AnalysisStatusBanner({
             {errorInfo.message ? ` · ${errorInfo.message}` : null}
           </span>
         )}
-        {!isError && <span className="text-[11.5px] text-zinc-400">Pipeline stopped at your request.</span>}
+        {!isError && <span className="text-[11.5px] text-zinc-400">You stopped this analysis.</span>}
       </div>
       <StatusBtn onClick={onRerun} disabled={isRerunning}>
         {isRerunning ? "↻ Running…" : "↻ Retry"}

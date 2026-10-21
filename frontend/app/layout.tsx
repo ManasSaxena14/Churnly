@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Inter_Tight, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { CursorGlow } from "@/components/motion";
 
-const inter = Inter({
+// Geist (Vercel's typeface) for UI + display, Geist Mono for data and code,
+// Instrument Serif italic for the editorial accent words.
+const geist = Geist({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-});
-
-const interTight = Inter_Tight({
-  variable: "--nf-display",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const instrumentSerif = Instrument_Serif({
@@ -24,7 +20,7 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
-const jetbrains = JetBrains_Mono({
+const geistMono = Geist_Mono({
   variable: "--nf-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
@@ -44,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${interTight.variable} ${instrumentSerif.variable} ${jetbrains.variable} dark h-full antialiased`}
+      className={`${geist.variable} ${instrumentSerif.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <Toaster

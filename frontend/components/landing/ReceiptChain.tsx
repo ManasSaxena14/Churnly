@@ -8,11 +8,11 @@ import { SplitReveal } from "@/components/motion";
 /* Illustrative rationale chain — the shape every playbook problem carries
    (see backend evidence_dossier). Values here are an example, labelled as such. */
 const LINKS = [
-  { k: "Statistic", tone: "text-sky-300 border-sky-400/30", v: "contract::Monthly", sub: "churn 61% vs 23% rest · p_adj < 0.001" },
-  { k: "Root cause", tone: "text-violet-300 border-violet-400/30", v: "No commitment moment before the first renewal", sub: "2 / 3 runs agree · cites reforge_aha_001" },
-  { k: "Tactic", tone: "text-teal-300 border-teal-400/30", v: "Annual-plan offer at day 25 for engaged monthlies", sub: "growth hacker · AARRR / activation" },
-  { k: "Simulation", tone: "text-emerald-300 border-emerald-400/30", v: "+6.8% retention", sub: "p10 3.1% · p90 10.4% · RAG-anchored prior" },
-  { k: "Risk", tone: "text-amber-300 border-amber-400/30", v: "Discount cannibalises annual buyers", sub: "skeptic severity: medium → gate by usage" },
+  { k: "The data", tone: "text-sky-300 border-sky-400/30", v: "Monthly-contract customers", sub: "61% leave vs 23% of everyone else · not a fluke" },
+  { k: "The cause", tone: "text-violet-300 border-violet-400/30", v: "No reason to commit before the first renewal", sub: "2 of 3 analyses agree · backed by a case study" },
+  { k: "The action", tone: "text-teal-300 border-teal-400/30", v: "Offer an annual plan on day 25 to active monthly users", sub: "suggested by the growth strategist" },
+  { k: "Expected impact", tone: "text-emerald-300 border-emerald-400/30", v: "+6.8% retention", sub: "likely range 3.1% – 10.4% · from 10,000 simulations" },
+  { k: "The risk", tone: "text-amber-300 border-amber-400/30", v: "Could discount customers who'd buy annual anyway", sub: "flagged by the reviewer · offer only to active users" },
 ];
 
 export function ReceiptChain() {
@@ -36,15 +36,14 @@ export function ReceiptChain() {
   return (
     <section ref={root} id="receipts" className="mx-auto grid max-w-7xl gap-14 px-4 py-28 sm:px-8 lg:grid-cols-2">
       <div className="lg:sticky lg:top-28 lg:self-start">
-        <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Receipts</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">The evidence trail</p>
         <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[44px]">
-          Click any recommendation. <span data-keep className="inline-block font-serif font-normal italic text-zinc-400">See the whole chain.</span>
+          Click any recommendation. <span data-keep className="inline-block font-serif font-normal italic text-zinc-400">See why.</span>
         </SplitReveal>
         <p className="mt-6 max-w-md text-[15px] leading-[1.75] text-zinc-400">
-          The final playbook is assembled from an evidence dossier built in plain Python — not
-          by the model. Problem #1 maps to dossier row #1: the triggering statistic, the voted
-          cause and its citations, the tactic, its simulated outcome, and the skeptic&apos;s risk
-          flag. A groundedness check marks anything missing a link as unsupported.
+          Every problem in your plan comes with its full story: the numbers that revealed it, the
+          cause the analysts agreed on, the action to take, the impact we expect and the risk to
+          watch. If any piece of that evidence is missing, the plan tells you.
         </p>
       </div>
 
@@ -67,7 +66,7 @@ export function ReceiptChain() {
             </div>
           ))}
         </div>
-        <p className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-zinc-600">example chain · illustrative values</p>
+        <p className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-zinc-600">example · illustrative numbers</p>
       </div>
     </section>
   );

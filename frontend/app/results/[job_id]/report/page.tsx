@@ -8,6 +8,7 @@ import { LogoMark } from "@/components/brand/Logo";
 import { BRAND } from "@/lib/brand";
 import { API_BASE, fetchCachedDemo } from "@/lib/demo";
 import { cn } from "@/lib/utils";
+import { friendlyStat } from "@/lib/labels";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify, type ReportData } from "../export";
 import type { ProblemSolution, RunMetrics } from "../types";
 
@@ -91,7 +92,7 @@ function Problem({ p }: { p: ProblemSolution }) {
         <span className="mr-2 text-teal-700">{p.priority}.</span>{p.problem.title}
       </h3>
       <p className="mt-1.5 text-[12.5px] leading-[1.6] text-zinc-700">{p.problem.description}</p>
-      <p className="mt-1 text-[11.5px] text-zinc-500">Segment: {p.problem.affected_segment} · Impact: {p.problem.current_impact}</p>
+      <p className="mt-1 text-[11.5px] text-zinc-500">Who it affects: {p.problem.affected_segment} · Current impact: {p.problem.current_impact}</p>
 
       <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 print:bg-white">
         <div className="text-[12.5px] font-semibold text-zinc-900">{p.solution.title} <span className="font-normal text-zinc-500">· {p.solution.framework_used}</span></div>
@@ -100,26 +101,26 @@ function Problem({ p }: { p: ProblemSolution }) {
           {(p.solution.key_actions ?? []).map((a) => <li key={a}>{a}</li>)}
         </ul>
         <p className="mt-2 text-[11.5px] text-zinc-600">
-          Expected: <b className="text-zinc-900">+{p.retention_impact.estimated_lift_percent}%</b> retention · ~{p.retention_impact.estimated_users_retained} users · {p.retention_impact.estimated_revenue_impact} · confidence {pct(p.retention_impact.confidence)} · {p.retention_impact.time_to_impact}
+          Expected: <b className="text-zinc-900">+{p.retention_impact.estimated_lift_percent}%</b> retention · ~{p.retention_impact.estimated_users_retained} customers kept · {p.retention_impact.estimated_revenue_impact} · confidence {pct(p.retention_impact.confidence)} · {p.retention_impact.time_to_impact}
         </p>
       </div>
 
       {ch && (
         <div className="mt-3">
-          <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Evidence chain</div>
+          <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Why we recommend this</div>
           <Table
             head={["Link", "Detail"]}
             rows={[
-              ["Statistic", s?.stat_id && s.stat_id !== "(none)"
-                ? <><code className="text-[11px]">{s.stat_id}</code> · churn {pct(s.churn_rate, 1)} · n={s.size ?? "—"}{s.p_adj != null ? ` · p_adj ${s.p_adj.toFixed(4)}` : ""}{s.significant === false ? " · not significant" : ""}</>
-                : "no matching statistical bucket"],
-              ["Root cause", <>{ch.cause?.text ?? "—"}{ch.cause?.citations?.length ? <span className="text-zinc-500"> · cites {ch.cause.citations.join(", ")}</span> : null}</>],
-              ["Tactic", ch.tactic?.recommendation ?? "—"],
-              ["Simulated outcome", ch.simulated_outcome?.mean_lift != null
-                ? `mean ${ch.simulated_outcome.mean_lift}% (p10 ${ch.simulated_outcome.percentile_10 ?? "—"}%, p90 ${ch.simulated_outcome.percentile_90 ?? "—"}%) · prior: ${ch.simulated_outcome.lift_prior_anchor ?? "—"}`
-                : "not simulated"],
-              ["Risk", `${ch.risk?.description ?? "—"}${ch.risk?.severity ? ` (${ch.risk.severity})` : ""}`],
-              ["Mitigation", ch.mitigation?.description ?? "—"],
+              ["The data", s?.stat_id && s.stat_id !== "(none)"
+                ? <>{friendlyStat(s.stat_id)} · {pct(s.churn_rate, 1)} of {s.size ?? "—"} customers left{s.significant === false ? " · could be chance" : " · a real pattern"}</>
+                : "not linked to a specific customer group"],
+              ["The cause", <>{ch.cause?.text ?? "—"}{ch.cause?.citations?.length ? <span className="text-zinc-500"> · sources: {ch.cause.citations.join(", ")}</span> : null}</>],
+              ["The action", ch.tactic?.recommendation ?? "—"],
+              ["Expected impact", ch.simulated_outcome?.mean_lift != null
+                ? `about ${ch.simulated_outcome.mean_lift}% more customers kept (likely ${ch.simulated_outcome.percentile_10 ?? "—"}%–${ch.simulated_outcome.percentile_90 ?? "—"}%)${ch.simulated_outcome.lift_prior_anchor === "rag" ? " · based on published case studies" : ""}`
+                : "not estimated"],
+              ["The risk", `${ch.risk?.description ?? "—"}${ch.risk?.severity ? ` (${ch.risk.severity} risk)` : ""}`],
+              ["How to reduce it", ch.mitigation?.description ?? "—"],
             ]}
           />
         </div>
@@ -127,7 +128,7 @@ function Problem({ p }: { p: ProblemSolution }) {
 
       {p.implementation_steps?.length > 0 && (
         <div className="mt-3">
-          <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Implementation</div>
+          <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Steps</div>
           <Table head={["#", "Action", "Owner", "Effort", "Timeline"]}
             rows={p.implementation_steps.map((st) => [st.step, st.action, st.owner, st.effort, st.timeline])} />
         </div>
@@ -168,7 +169,7 @@ export default function ReportPage() {
     return (
       <div className="grid min-h-screen place-items-center bg-zinc-100 px-4 text-zinc-700">
         <div className="max-w-md text-center">
-          <p className="text-[15px]">{state === "loading" ? "Preparing report…" : "No finished playbook found for this run."}</p>
+          <p className="text-[15px]">{state === "loading" ? "Preparing report…" : "We couldn't find a finished plan for this analysis."}</p>
           {state === "missing" && (
             <Link href={`/results/${jobId}`} className="mt-4 inline-block text-[13px] text-teal-700 underline">Back to results</Link>
           )}
@@ -205,7 +206,7 @@ export default function ReportPage() {
       <article className="report-paper mx-auto my-8 max-w-[210mm] animate-rise-in bg-white opacity-0 print:animate-none print:opacity-100 px-[16mm] py-[14mm] shadow-[0_10px_40px_rgba(0,0,0,0.12)] print:my-0 print:max-w-none print:p-0 print:shadow-none">
         <header className="flex items-start justify-between gap-6 border-b-2 border-zinc-900 pb-4">
           <div>
-            <div className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-teal-700">Retention playbook</div>
+            <div className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-teal-700">Retention plan</div>
             <h1 className="mt-1 font-display text-[26px] font-semibold leading-[1.15] tracking-[-0.03em]">{pb.title}</h1>
             <div className="mt-1.5 text-[11.5px] text-zinc-500">
               {pb.company ? `${pb.company} · ` : ""}{created} · job <code>{jobId.split("-")[0]}</code>{data.demo ? " · cached demo run" : ""}
@@ -234,25 +235,25 @@ export default function ReportPage() {
           <div className="mt-3 flex flex-col gap-1 text-[11.5px] text-zinc-600">
             {g?.problems ? (
               <p>
-                <b className={cn((g.grounded_rate ?? 0) >= 0.99 ? "text-emerald-700" : "text-amber-700")}>Groundedness {pct(g.grounded_rate)}</b>{" "}
-                of problems carry a significant statistic, a citation and a simulation (stat {pct(g.stat_rate)} · citation {pct(g.citation_rate)} · simulation {pct(g.simulation_rate)}).
+                <b className={cn((g.grounded_rate ?? 0) >= 0.99 ? "text-emerald-700" : "text-amber-700")}>Evidence score {pct(g.grounded_rate)}</b>{" "}
+                of problems are fully backed by data, a source and a simulation (data {pct(g.stat_rate)} · source {pct(g.citation_rate)} · simulation {pct(g.simulation_rate)}).
               </p>
             ) : null}
             {sig?.tests_run ? (
               <p>
-                <b className="text-zinc-800">Stats gate</b> {sig.tests_run} z-tests, {sig.significant_after_correction ?? 0} survive {sig.correction === "none" ? "raw p < 0.05" : "Benjamini-Hochberg correction"}
-                {sig.removed_by_correction ? `; ${sig.removed_by_correction} discarded as likely noise` : ""}.
+                <b className="text-zinc-800">Data check</b> {sig.tests_run} customer patterns tested, {sig.significant_after_correction ?? 0} are real
+                {sig.removed_by_correction ? `; ${sig.removed_by_correction} filtered out as likely chance` : ""}.
               </p>
             ) : null}
           </div>
         ) : null}
 
-        <H2>Problems &amp; solutions</H2>
+        <H2>Problems and what to do</H2>
         {(pb.problems_and_solutions ?? []).map((p) => <Problem key={p.priority} p={p} />)}
 
         {rm && (
           <>
-            <H2>30 / 60 / 90 roadmap</H2>
+            <H2>30 / 60 / 90 day roadmap</H2>
             <div className="grid grid-cols-3 gap-3">
               {([["Days 1–30", rm.phase_1_30_days], ["Days 31–60", rm.phase_2_60_days], ["Days 61–90", rm.phase_3_90_days]] as const).map(([label, ph]) => ph && (
                 <div key={label} className="break-inside-avoid rounded-md border border-zinc-200 p-3">
@@ -270,7 +271,7 @@ export default function ReportPage() {
 
         {pb.success_metrics?.length ? (
           <>
-            <H2>Success metrics</H2>
+            <H2>How to measure success</H2>
             <Table head={["Metric", "Current", "Target", "How measured", "Review"]}
               rows={pb.success_metrics.map((m) => [m.metric, m.current_value, m.target_value, m.measurement_method, m.review_frequency])} />
           </>
@@ -278,31 +279,31 @@ export default function ReportPage() {
 
         {pb.risks_and_mitigations?.length ? (
           <>
-            <H2>Risks &amp; mitigations</H2>
-            <Table head={["Risk", "Probability", "Mitigation", "Contingency"]}
+            <H2>Risks and how to handle them</H2>
+            <Table head={["Risk", "Likelihood", "How to reduce it", "Backup plan"]}
               rows={pb.risks_and_mitigations.map((r) => [r.risk, r.probability, r.mitigation, r.contingency])} />
           </>
         ) : null}
 
         {data.simulation && data.simulation.simulated !== false && data.simulation.interventions?.length ? (
           <>
-            <H2>Monte Carlo simulation</H2>
+            <H2>Expected impact</H2>
             <p className="mb-2 text-[11.5px] text-zinc-600">
-              {data.simulation.iterations.toLocaleString()} draws per intervention · combined expected lift <b>+{data.simulation.expected_lift}%</b> (5–95%: {data.simulation.confidence_low}%–{data.simulation.confidence_high}%).
+              Each idea was tested in {data.simulation.iterations.toLocaleString()} simulations · overall about <b>+{data.simulation.expected_lift}%</b> more customers kept (likely range {data.simulation.confidence_low}%–{data.simulation.confidence_high}%).
             </p>
-            <Table head={["Intervention", "p10", "Mean", "p90", "Prior"]}
-              rows={data.simulation.interventions.map((i) => [i.name, `${i.p10}%`, `${i.mean}%`, `${i.p90}%`, i.lift_prior_anchor === "rag" ? "cited" : "model estimate"])} />
+            <Table head={["Idea", "Cautious", "Likely", "Best case", "Based on"]}
+              rows={data.simulation.interventions.map((i) => [i.name, `${i.p10}%`, `${i.mean}%`, `${i.p90}%`, i.lift_prior_anchor === "rag" ? "case studies" : "AI estimate"])} />
           </>
         ) : null}
 
         {data.metrics?.llm_calls != null && (
           <p className="mt-10 border-t border-zinc-200 pt-3 text-[10.5px] text-zinc-500">
-            Run telemetry: {data.metrics.llm_calls} LLM calls · {(data.metrics.total_tokens ?? 0).toLocaleString()} tokens · p50 {data.metrics.latency_p50_s ?? "—"}s per call
-            {data.metrics.cost_usd != null ? ` · $${data.metrics.cost_usd.toFixed(4)}` : ""}.
+            Run details: {data.metrics.llm_calls} AI requests · {(data.metrics.total_tokens ?? 0).toLocaleString()} tokens processed · typical response {data.metrics.latency_p50_s ?? "—"}s
+            {data.metrics.cost_usd != null ? ` · cost $${data.metrics.cost_usd.toFixed(4)}` : " · free tier"}.
           </p>
         )}
         <p className="mt-3 text-[10.5px] text-zinc-400">
-          Generated by {BRAND.name}. Every statistic comes from your data; lift estimates are simulated ranges, not guarantees.
+          Generated by {BRAND.name}. Every number comes from your data; impact estimates are simulated ranges, not guarantees.
         </p>
       </article>
 

@@ -33,12 +33,12 @@ export function HITLModal({
         <div className="border-b border-white/6 px-8 pb-[18px] pt-7">
           <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-600">
             <StatusDot tone="violet" pulse />
-            Human in the loop · pipeline paused
+            Quick question · analysis paused
           </div>
           <h3 className="mb-1.5 text-[22px] font-semibold leading-[1.25] tracking-[-0.02em]">
-            Before we build your strategy — answer these to sharpen the playbook.
+            A few quick questions to make your plan more accurate.
           </h3>
-          <div className="text-[13px] text-zinc-400">{questions.length} questions · ~30 seconds · all optional</div>
+          <div className="text-[13px] text-zinc-400">{questions.length} questions · about 30 seconds · all optional</div>
         </div>
         <div className="px-8 py-2">
           {questions.map((q, i) => (
@@ -68,10 +68,10 @@ export function HITLModal({
             {submitting ? (
               <>
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                Routing answers…
+                Saving your answers…
               </>
             ) : (
-              <>Generate strategies →</>
+              <>Continue →</>
             )}
           </Btn>
         </div>

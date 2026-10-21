@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Upload, ChevronLeft, FileSpreadsheet, X, Check, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { Upload, ChevronLeft, FileSpreadsheet, X, Check, Loader2, ArrowRight, Rocket } from "lucide-react";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/brand/Logo";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
@@ -53,11 +53,11 @@ const INITIAL: FormData = {
 };
 
 const STEPS = [
-  { label: "About & Data", why: "Your CSV feeds the stats engine — survival curves, hazard ratios and corrected significance tests run before any LLM call. Confirm the column roles: a wrong churn column silently poisons every number downstream." },
-  { label: "Business & Revenue", why: "Picks the playbook priors and filters out interventions your pricing can't support." },
-  { label: "Product & Market", why: "Grounds every agent in what you actually ship and who you lose to." },
-  { label: "Ops & Goals", why: "Removes tactics you can't staff or have already tried, and sets the metric to optimise." },
-  { label: "Final", why: "Quick runs the fast models end-to-end. Deep triples the diagnosis vote and adds a reasoning pass." },
+  { label: "About & Data", why: "Your data powers every number in the report. Please check each column is labelled correctly — if the churn column is wrong, every result will be wrong." },
+  { label: "Business & Revenue", why: "Helps us compare you with similar businesses and skip ideas your pricing can't support." },
+  { label: "Product & Market", why: "Keeps every recommendation tied to what you actually sell and who you compete with." },
+  { label: "Ops & Goals", why: "Removes ideas your team can't run or has already tried, and sets what we optimise for." },
+  { label: "Final", why: "Quick is fast and great for a first look. Deep checks the diagnosis three times and writes a more detailed plan." },
 ];
 
 /* ─── sub-components ───────────────────────────────────────────── */
@@ -225,8 +225,8 @@ export default function FormPage() {
       if (prefersReducedMotion()) return;
       gsap.fromTo(
         "[data-step-item]",
-        { x: 36 * dir, opacity: 0, filter: "blur(6px)" },
-        { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out", stagger: 0.03, overwrite: true, clearProps: "filter,transform" },
+        { x: 36 * dir, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: "expo.out", stagger: 0.03, overwrite: true, clearProps: "transform" },
       );
     },
     { scope: panelRef, dependencies: [step] },
@@ -238,7 +238,7 @@ export default function FormPage() {
       if (prefersReducedMotion()) return;
       gsap.utils.toArray<HTMLElement>("[data-aurora]").forEach((el, i) => {
         gsap.to(el, {
-          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15), scale: gsap.utils.random(0.9, 1.2),
+          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15),
           duration: gsap.utils.random(10, 15), ease: "sine.inOut", repeat: -1, yoyo: true, delay: i,
         });
       });
@@ -419,7 +419,7 @@ export default function FormPage() {
             <Divider />
 
             <QuestionTitle>Upload your customer data</QuestionTitle>
-            <Hint>A CSV with one row per customer. It needs a 0/1 churn column and a tenure / months-active column — everything else is detected automatically.</Hint>
+            <Hint>A CSV with one row per customer. It needs a column showing whether each customer left, and one showing how long they&apos;ve been a customer. We detect everything else automatically.</Hint>
             <div data-step-item onDragOver={(e) => e.preventDefault()} onDrop={onDrop} onClick={() => fileRef.current?.click()}
               className={cn(
                 "group relative cursor-pointer overflow-hidden rounded-2xl border border-dashed transition-all duration-300",
@@ -454,7 +454,7 @@ export default function FormPage() {
 
             {form.csvFile && (
               <div className="mt-10">
-                <SectionLabel>What does churn = 1 mean in this file?</SectionLabel>
+                <SectionLabel>What counts as a customer leaving in this file?</SectionLabel>
                 {radio("churnDefinition", ["Cancelled paid subscription", "Downgraded to free / lower tier", "Inactivity", "Contract not renewed", "Failed payment (involuntary)", "Other"])}
                 {form.churnDefinition === "Inactivity" && <div data-step-item className="mt-3"><Input value={form.churnInactivityDays} onChange={(e) => set("churnInactivityDays", e.target.value)} placeholder="Number of days (e.g. 30)" className={`${INPUT_CLS} h-10 w-56`} /></div>}
                 {form.churnDefinition === "Other" && <div data-step-item className="mt-3"><Input value={form.churnDefinitionOther} onChange={(e) => set("churnDefinitionOther", e.target.value)} placeholder="Describe your churn definition…" className={`${INPUT_CLS} h-10`} /></div>}
@@ -468,7 +468,7 @@ export default function FormPage() {
         return (
           <>
             <QuestionTitle>Business type, customer & stage</QuestionTitle>
-            <Hint>Determines which retention playbook, benchmarks and diagnostic paths we use.</Hint>
+            <Hint>This tells us which benchmarks and retention strategies fit your business.</Hint>
             <SectionLabel>Business model</SectionLabel>
             {radio("businessModel", ["B2B SaaS", "B2C SaaS", "E-commerce / Subscription", "Marketplace", "Fintech", "Media/Content", "Other"])}
             <div className="h-7" />
@@ -483,7 +483,7 @@ export default function FormPage() {
             ], 3)}
             <Divider />
             <QuestionTitle>Revenue model & pricing flexibility</QuestionTitle>
-            <Hint>The single most important constraint filter — decides whether pricing-based interventions are on the table.</Hint>
+            <Hint>One of the most important answers — it decides whether pricing changes can be part of your plan.</Hint>
             <SectionLabel>Revenue model</SectionLabel>
             {radio("revenueModel", ["Monthly subscription", "Annual subscription", "Usage-based", "Freemium", "One-time + renewals", "Transactional"], 3)}
             <div className="h-7" />
@@ -497,7 +497,7 @@ export default function FormPage() {
         return (
           <>
             <QuestionTitle>Product — features & flexibility</QuestionTitle>
-            <Hint>Features ground every downstream analysis. Without them the agents reason in a vacuum.</Hint>
+            <Hint>Knowing your key features keeps every recommendation specific to your product.</Hint>
             <SectionLabel>Core features — top 3–5 things customers use most</SectionLabel>
             <div data-step-item><Input id="q4-feat" value={form.coreFeatures} onChange={(e) => set("coreFeatures", e.target.value)} placeholder="e.g. Invoice creation, recurring billing, Stripe integration" className={`${INPUT_CLS} h-11`} /></div>
             <div className="h-7" />
@@ -508,7 +508,7 @@ export default function FormPage() {
             {radio("hasCompletionPoint", ["Yes", "No", "Partially"], 3)}
             <Divider />
             <QuestionTitle>Acquisition & competition</QuestionTitle>
-            <Hint>Acquisition channel quality is a major hidden churn driver — paid customers often churn 2–3× more than organic.</Hint>
+            <Hint>Where customers come from matters — people from paid ads often leave 2–3× more than people who find you organically.</Hint>
             <SectionLabel>Top acquisition channels — pick up to 2</SectionLabel>
             {checks("topChannels", ["Organic search / SEO", "Paid ads", "Outbound sales", "Referrals / word of mouth", "Content / community", "Partnerships / integrations", "Product-led (free → paid)"], 2)}
             <div className="h-7" />
@@ -525,7 +525,7 @@ export default function FormPage() {
         return (
           <>
             <QuestionTitle>Operational capacity & current efforts</QuestionTitle>
-            <Hint>Removes unrealistic recommendations and stops us suggesting what you&apos;ve already tried.</Hint>
+            <Hint>So we only suggest things your team can actually do, and nothing you&apos;ve already tried.</Hint>
             <SectionLabel>Support model</SectionLabel>
             {radio("supportModel", ["Self-serve only", "Email support", "Email + chat", "Dedicated CSMs for key accounts", "Full-service"])}
             <div className="h-7" />
@@ -533,7 +533,7 @@ export default function FormPage() {
             {checks("retentionTactics", ["Onboarding flow / tutorials", "Health scoring / at-risk alerts", "Proactive outreach to at-risk users", "Win-back campaigns", "Loyalty / discount programs", "Customer success / account management", "NPS / feedback collection", "None of the above"])}
             <Divider />
             <QuestionTitle>Priority, goal & timeline</QuestionTitle>
-            <Hint>Sets the metric to optimise, the segment to target, and whether to favour tactical or structural changes.</Hint>
+            <Hint>This sets what success looks like, which customers to focus on, and whether you want quick wins or bigger changes.</Hint>
             <SectionLabel>Which customer segment matters most?</SectionLabel>
             {radio("prioritySegment", ["All customers equally", "High-value / enterprise accounts", "Newest customers (first 90 days)", "Long-tenured customers showing decline", "Specific tier or plan"])}
             {form.prioritySegment === "Specific tier or plan" && <div data-step-item className="mt-3"><Input value={form.prioritySegmentOther} onChange={(e) => set("prioritySegmentOther", e.target.value)} placeholder="Which tier or plan?" className={`${INPUT_CLS} h-10`} /></div>}
@@ -551,7 +551,7 @@ export default function FormPage() {
         return (
           <>
             <QuestionTitle required={false}>Anything else we should know?</QuestionTitle>
-            <Hint>Constraints, past failures, internal debates, upcoming launches. The people who fill this in get the sharpest playbooks.</Hint>
+            <Hint>Limits, things that didn&apos;t work, upcoming launches, internal debates — the more context you share, the sharper your plan.</Hint>
             <div data-step-item>
               <Textarea id="q8-extra" value={form.anythingElse} onChange={(e) => set("anythingElse", e.target.value)}
                 placeholder="e.g. Win-back campaign failed — 12% ROI, $8K cost. CEO wants upsell focus. AI feature launching in 4 months…"
@@ -559,11 +559,11 @@ export default function FormPage() {
             </div>
             <Divider />
             <QuestionTitle>How deep should the analysis go?</QuestionTitle>
-            <Hint>Same pipeline, same guarantees — dialled to the stakes.</Hint>
+            <Hint>Both use the same checks. Deep simply takes more time to be more thorough.</Hint>
             <div data-step-item className="grid gap-3 sm:grid-cols-2">
               {[
-                { v: "quick", t: "Quick scan", time: "~2–4 min", d: "Fast models end-to-end, single-pass diagnosis, no reasoning trace." },
-                { v: "deep", t: "Deep analysis", time: "~10–20 min", d: "Stronger model on reasoning nodes, 3-run self-consistency vote, two-pass playbook." },
+                { v: "quick", t: "Quick analysis", time: "~2–4 min", d: "Fast results — ideal for a first look at your data." },
+                { v: "deep", t: "Deep analysis", time: "~10–20 min", d: "Stronger AI, the diagnosis checked three times, and a more detailed plan." },
               ].map((o) => {
                 const sel = form.analysisDepth === o.v;
                 return (
@@ -583,7 +583,7 @@ export default function FormPage() {
               })}
             </div>
             <NextBtn onClick={submit} disabled={submitting}>
-              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Starting analysis…</> : <><Sparkles className="h-4 w-4" /> Run analysis</>}
+              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Starting analysis…</> : <><Rocket className="h-4 w-4" /> Run analysis</>}
             </NextBtn>
           </>
         );
@@ -596,9 +596,9 @@ export default function FormPage() {
   return (
     <div ref={shellRef} className="grain relative flex min-h-screen flex-1 flex-col bg-ink">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div data-aurora className="absolute right-[-10%] top-[-20%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.09),transparent)] blur-2xl" />
-        <div data-aurora className="absolute bottom-[-20%] left-[-10%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.1),transparent)] blur-2xl" />
-        <div data-aurora className="absolute bottom-[10%] right-[10%] h-[40vh] w-[35vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.06),transparent)] blur-2xl" />
+        <div data-aurora className="absolute right-[-10%] top-[-20%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.09),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[-20%] left-[-10%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.1),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[10%] right-[10%] h-[40vh] w-[35vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.06),transparent)] will-change-transform" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,#000,transparent_80%)]" />
       </div>
       {launchStage && <LaunchOverlay stage={launchStage} />}

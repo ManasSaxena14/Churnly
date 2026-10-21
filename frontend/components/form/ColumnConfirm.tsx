@@ -55,7 +55,7 @@ export function useColumnInspection(file: File | null) {
       const up = await fetch(`${API_BASE}/upload`, { method: "POST", body: fd });
       if (!up.ok) {
         const detail = await up.json().then((d) => d?.detail).catch(() => null);
-        throw new Error(detail || "Upload failed — is the backend running?");
+        throw new Error(detail || "We couldn't upload your file. Please check the server is running and try again.");
       }
       const { file_path } = await up.json();
       const inspection = await inspect(file_path);
@@ -63,7 +63,7 @@ export function useColumnInspection(file: File | null) {
       setState({ status: "ready", filePath: file_path, inspection, mapping: inspection.resolved, checking: false });
     } catch (err) {
       if (id !== reqId.current) return;
-      const message = err instanceof TypeError ? `Can't reach the backend at ${API_BASE}.` : (err as Error).message;
+      const message = err instanceof TypeError ? `We can't reach the Churnly server (${API_BASE}). Please make sure it's running.` : (err as Error).message;
       setState({ status: "error", message });
     }
   }, [file, inspect]);
@@ -186,7 +186,7 @@ export function ColumnConfirm({
             <div key={w} className="flex items-start gap-2 text-amber-300"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" /> {w}</div>
           ))}
           {inspection.summary.churn_needs_normalizing && ok && (
-            <div className="flex items-start gap-2 text-zinc-400"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand" /> Churn values will be converted to 0/1 automatically.</div>
+            <div className="flex items-start gap-2 text-zinc-400"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand" /> Yes/no values will be converted automatically.</div>
           )}
         </div>
       )}

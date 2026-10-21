@@ -3,7 +3,7 @@
    backend/ and update these when they change. Never hand-edit a number that
    didn't come out of the harness. */
 export const EVAL_RESULTS = {
-  source: "50 synthetic datasets with planted churn drivers · deterministic stats layer",
+  source: "50 test datasets with known causes of churn · statistics step",
   datasets: 50,
   withBH: {
     driverRecall: 0.929,

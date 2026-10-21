@@ -84,7 +84,7 @@ export function CursorGlow() {
 
 /* ── Reveal: fade/rise/blur children in, on mount or on scroll ────────── */
 export function Reveal({
-  children, className, as: Tag = "div", stagger = 0.08, y = 22, delay = 0, onScroll = false, blur = true, selector,
+  children, className, as: Tag = "div", stagger = 0.08, y = 22, delay = 0, onScroll = false, blur = false, selector,
 }: {
   children: ReactNode; className?: string; as?: "div" | "section" | "ul" | "ol";
   stagger?: number; y?: number; delay?: number; onScroll?: boolean; blur?: boolean;

@@ -22,18 +22,18 @@ function GroundednessStrip({ report }: { report: GroundednessReport }) {
   return (
     <div className={cn("mb-[18px] rounded-[10px] border px-4 py-3", tone)}>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-        <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-400">Groundedness</span>
+        <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-400">Evidence score</span>
         <span className="tnum text-[18px] font-bold tracking-[-0.02em] text-zinc-50">{pct(report.grounded_rate)}</span>
-        <span className="text-zinc-400">of problems carry all three receipts</span>
+        <span className="text-zinc-400">of problems are fully backed by data, a source and a simulation</span>
         <span className="ml-auto flex flex-wrap gap-1.5">
-          <Chip tone="blue" sm>stat {pct(report.stat_rate)}</Chip>
-          <Chip tone="purple" sm>citation {pct(report.citation_rate)}</Chip>
+          <Chip tone="blue" sm>data {pct(report.stat_rate)}</Chip>
+          <Chip tone="purple" sm>source {pct(report.citation_rate)}</Chip>
           <Chip tone="emerald" sm>simulation {pct(report.simulation_rate)}</Chip>
         </span>
       </div>
       {report.unsupported.length > 0 && (
         <div className="mt-2 text-[11.5px] leading-[1.5] text-zinc-500">
-          Missing a receipt: {report.unsupported.join(" · ")}
+          Missing some evidence: {report.unsupported.join(" · ")}
         </div>
       )}
     </div>
@@ -63,7 +63,7 @@ export function StrategySection({
   return (
     <Section
       tone="emerald"
-      title={`Strategy · ${data.title}`}
+      title={`Your retention plan · ${data.title}`}
       meta={`${data.created_date ? `created ${new Date(data.created_date).toLocaleDateString()} · ` : ""}${data.problems_and_solutions?.length ?? 0} problems`}
       visible={visible}
     >
@@ -83,7 +83,7 @@ export function StrategySection({
 
       {phases.length > 0 && (
         <>
-          <SubHeading>30 / 60 / 90 Roadmap</SubHeading>
+          <SubHeading>30 / 60 / 90 day roadmap</SubHeading>
           <div className="mb-[18px] grid grid-cols-3 gap-3">
             {phases.map((ph) => (
               <div key={ph.key} className={cn("flex flex-col rounded-[10px] border border-white/6 bg-white/[0.02] px-[18px] py-4 transition-opacity duration-200", ph.dim && "opacity-50")}>
@@ -133,7 +133,7 @@ export function StrategySection({
 
       {successMetrics.length > 0 && (
         <>
-          <SubHeading>Success Metrics</SubHeading>
+          <SubHeading>How to measure success</SubHeading>
           <table className="mb-[18px] w-full border-collapse text-xs">
             <thead>
               <tr>
@@ -163,14 +163,14 @@ export function StrategySection({
       )}
 
       {data.risks_and_mitigations && data.risks_and_mitigations.length > 0 && (
-        <Collapsible title="Risks & Mitigations" count={`${data.risks_and_mitigations.length} risks identified`}>
+        <Collapsible title="Risks and how to handle them" count={`${data.risks_and_mitigations.length} risks to watch`}>
           {data.risks_and_mitigations.map((r, i) => (
             <div key={i} className="grid grid-cols-[1fr_auto] items-start gap-3.5 border-t border-white/6 py-3 first:border-t-0 first:pt-3.5">
               <div>
                 <div className="mb-1 text-[13px] font-medium text-zinc-50">{r.risk}</div>
-                <div className="text-xs leading-normal text-zinc-400"><b className="font-medium text-zinc-300">Mitigation:</b> {r.mitigation}</div>
+                <div className="text-xs leading-normal text-zinc-400"><b className="font-medium text-zinc-300">How to reduce it:</b> {r.mitigation}</div>
                 {r.contingency && (
-                  <div className="mt-1 text-xs leading-normal text-zinc-400"><b className="font-medium text-zinc-300">Contingency:</b> {r.contingency}</div>
+                  <div className="mt-1 text-xs leading-normal text-zinc-400"><b className="font-medium text-zinc-300">Backup plan:</b> {r.contingency}</div>
                 )}
               </div>
               {probChip(r.probability)}
@@ -185,7 +185,7 @@ export function StrategySection({
       )}
 
       {data.resource_requirements && !ctx.quickWins && (
-        <Collapsible title="Resource Requirements" count="team · tech · budget">
+        <Collapsible title="What you'll need" count="team · tech · budget">
           <div className="grid grid-cols-3 gap-[18px] pt-3.5">
             {data.resource_requirements.team && (
               <div>

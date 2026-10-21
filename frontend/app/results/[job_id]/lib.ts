@@ -59,12 +59,12 @@ export function getBadge(action: string, ctx: Ctx): { kind: "eng" | "have" | "pr
 export type StageStatus = "done" | "active" | "pending";
 
 export const PIPELINE_STEPS = [
-  { id: "signal",    label: "Signal",    color: "amber",   key: "risk_ready",            typical: "~3s"      },
-  { id: "patterns",  label: "Patterns",  color: "blue",    key: "churn_profile_ready",   typical: "~5s"      },
-  { id: "diagnosis", label: "Diagnosis", color: "purple",  key: "diagnosis_ready",       typical: "~25–40s"  },
-  { id: "clarify",   label: "Clarify",   color: "violet",  key: "hitl_questions_ready",  typical: "human"    },
-  { id: "simulate",  label: "Simulate",  color: "teal",    key: "simulation_ready",      typical: "~4s"      },
-  { id: "strategy",  label: "Strategy",  color: "emerald", key: "solution_ready",        typical: "~30–60s · +retry" },
+  { id: "signal",    label: "Risk check",    color: "amber",   key: "risk_ready",            typical: "~3s"      },
+  { id: "patterns",  label: "Customer patterns",  color: "blue",    key: "churn_profile_ready",   typical: "~5s"      },
+  { id: "diagnosis", label: "Root causes", color: "purple",  key: "diagnosis_ready",       typical: "~25–40s"  },
+  { id: "clarify",   label: "Your input",   color: "violet",  key: "hitl_questions_ready",  typical: "human"    },
+  { id: "simulate",  label: "Impact simulation",  color: "teal",    key: "simulation_ready",      typical: "~4s"      },
+  { id: "strategy",  label: "Retention plan",  color: "emerald", key: "solution_ready",        typical: "~30–60s · +retry" },
 ] as const;
 
 export type PipelineColor = (typeof PIPELINE_STEPS)[number]["color"];
@@ -106,15 +106,15 @@ export function derivePipelineState(
 }
 
 export function statusText(pipelineState: Record<string, string>, hitlOpen: boolean, complete: boolean) {
-  if (complete) return "Analysis complete · 6 / 6 stages";
-  if (hitlOpen) return "Paused for human input · stage 4 / 6";
+  if (complete) return "Analysis complete · all 6 steps done";
+  if (hitlOpen) return "Waiting for your answers · step 4 of 6";
   const active = PIPELINE_STEPS.find(s => pipelineState[s.id] === "active");
   if (!active) return "Initializing…";
   const idx = PIPELINE_STEPS.findIndex(s => s.id === active.id);
   const labels: Record<string, string> = {
-    signal: "Detecting risk signal…", patterns: "Profiling churn patterns…",
-    diagnosis: "Diagnosing root causes…", clarify: "Awaiting clarification…",
-    simulate: "Running Monte Carlo simulation…", strategy: "Composing strategy playbook…",
+    signal: "Checking which customers are at risk…", patterns: "Looking at how long customers stay…",
+    diagnosis: "Finding why customers leave…", clarify: "Waiting for your input…",
+    simulate: "Simulating the impact of each idea…", strategy: "Writing your retention plan…",
   };
-  return `Analyzing · stage ${idx + 1} / 6 — ${labels[active.id]}`;
+  return `Step ${idx + 1} of 6 — ${labels[active.id]}`;
 }

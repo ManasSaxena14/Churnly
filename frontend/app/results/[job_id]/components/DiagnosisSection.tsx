@@ -42,26 +42,23 @@ export function DiagnosisSection({
   return (
     <Section
       tone="purple"
-      title="Root Cause"
-      meta={`${data.total_patterns_identified != null ? `${data.total_patterns_identified} patterns · ` : ""}${hyps.length} ranked hypotheses`}
+      title="Why customers leave"
+      meta={`${data.total_patterns_identified != null ? `${data.total_patterns_identified} patterns · ` : ""}${hyps.length} likely causes, ranked`}
       visible={visible}
     >
       {data.significance_summary?.tests_run ? (
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-teal-500/20 bg-teal-500/[0.04] px-3.5 py-2.5 text-xs text-zinc-300">
-          <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-teal-400">Stats gate</span>
-          <span className="tnum">{data.significance_summary.tests_run} z-tests</span>
+          <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-teal-400">Data check</span>
+          <span className="tnum">{data.significance_summary.tests_run} patterns tested</span>
           <span className="text-zinc-600">·</span>
-          <span className="tnum">
-            {data.significance_summary.significant_after_correction ?? 0} survive{" "}
-            {data.significance_summary.correction === "none" ? "raw p < 0.05" : "Benjamini-Hochberg"}
-          </span>
+          <span className="tnum">{data.significance_summary.significant_after_correction ?? 0} are real</span>
           {(data.significance_summary.removed_by_correction ?? 0) > 0 && (
             <>
               <span className="text-zinc-600">·</span>
-              <span className="tnum text-amber-400">{data.significance_summary.removed_by_correction} discarded as likely noise</span>
+              <span className="tnum text-amber-400">{data.significance_summary.removed_by_correction} filtered out as likely chance</span>
             </>
           )}
-          <span className="ml-auto text-[11px] text-zinc-500">agents may only build causes on surviving buckets</span>
+          <span className="ml-auto text-[11px] text-zinc-500">the AI may only explain patterns that are real</span>
         </div>
       ) : null}
 
@@ -71,7 +68,7 @@ export function DiagnosisSection({
             type="button"
             key={i}
             onClick={() => onOpenEvidence(i)}
-            aria-label={`Open evidence drawer for hypothesis ${i + 1}`}
+            aria-label={`See the evidence for cause ${i + 1}`}
             className="group block w-full cursor-pointer rounded-[10px] border border-white/6 bg-white/[0.02] px-4 py-3.5 text-left transition-[border-color,background,transform] duration-[180ms] hover:-translate-y-px hover:border-purple-500/32 hover:bg-white/[0.035] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500/60"
           >
             <div className="mb-2.5 flex items-start gap-3.5">
@@ -102,14 +99,14 @@ export function DiagnosisSection({
         <div className="mt-3.5 flex items-center gap-2.5 rounded-lg border border-amber-500/25 bg-amber-500/[0.04] px-3 py-2.5 text-xs">
           <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-amber-500">Losing to</span>
           <span className="text-zinc-50">{competitorText}</span>
-          <span className="text-[11px] text-zinc-500">· dominant cancellation destination</span>
+          <span className="text-[11px] text-zinc-500">· where most leaving customers go</span>
         </div>
       )}
 
       {(forensicArr.length > 0 || patternArr.length > 0) && (
         <div className="mt-3.5 grid grid-cols-2 gap-3">
           {forensicArr.length > 0 && (
-            <DxCard title="Forensic findings" badge={<Chip tone="zinc" sm>{forensicArr.length} citations</Chip>}>
+            <DxCard title="Key findings" badge={<Chip tone="zinc" sm>{forensicArr.length} citations</Chip>}>
               <div className="flex flex-col gap-2">
                 {forensicArr.slice(0, 6).map((f, i) => (
                   <div key={i} className="flex items-start justify-between gap-2.5 border-t border-white/6 py-2 text-xs first:border-t-0 first:pt-0">
@@ -124,7 +121,7 @@ export function DiagnosisSection({
             </DxCard>
           )}
           {patternArr.length > 0 && (
-            <DxCard title="Pattern segments" badge={<Chip tone="zinc" sm>{patternArr.length} segments</Chip>}>
+            <DxCard title="Customer groups" badge={<Chip tone="zinc" sm>{patternArr.length} segments</Chip>}>
               <table className="w-full border-collapse text-xs">
                 <thead>
                   <tr>
@@ -156,7 +153,7 @@ export function DiagnosisSection({
       )}
 
       {skepticArr.length > 0 && (
-        <DxCard className="mt-3" title="Skeptic caveats" badge={<Chip tone="zinc" sm>disclosed assumptions</Chip>}>
+        <DxCard className="mt-3" title="Reviewer notes" badge={<Chip tone="zinc" sm>things to keep in mind</Chip>}>
           <div className="flex flex-col gap-2">
             {skepticArr.slice(0, 5).map((s, i) => (
               <div key={i} className="border-t border-white/6 py-2 first:border-t-0 first:pt-0">

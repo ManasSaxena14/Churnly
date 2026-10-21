@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, BadgeCheck, Bot, ChevronDown, Database, FlaskConical, Gauge, Loader2, ShieldAlert, Sigma, Sparkles, X } from "lucide-react";
+import { ArrowUp, BadgeCheck, Bot, ChevronDown, Database, FlaskConical, Gauge, Loader2, ShieldAlert, Sigma, BookOpen, X } from "lucide-react";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { askCopilot, type CopilotEvent } from "@/lib/api";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { friendlyStat } from "@/lib/labels";
 
 type Step = { tool: string; args: Record<string, unknown>; summary?: string; table?: { columns: string[]; rows: unknown[][]; truncated: boolean } | null };
 type Msg =
@@ -13,12 +14,12 @@ type Msg =
   | { role: "assistant"; steps: Step[]; text?: string; citations?: string[]; unverified?: string[]; error?: string; pending: boolean };
 
 const TOOL_META: Record<string, { icon: typeof Database; label: string }> = {
-  run_sql: { icon: Database, label: "Querying your data" },
-  segment_stats: { icon: Sigma, label: "Checking significant segments" },
-  churn_drivers: { icon: Gauge, label: "Reading hazard drivers" },
-  risk_summary: { icon: ShieldAlert, label: "Scoring customer risk" },
-  simulate_scenario: { icon: FlaskConical, label: "Simulating a scenario" },
-  playbook: { icon: Sparkles, label: "Reading the playbook" },
+  run_sql: { icon: Database, label: "Looking up your data" },
+  segment_stats: { icon: Sigma, label: "Checking which patterns are real" },
+  churn_drivers: { icon: Gauge, label: "Checking what raises churn" },
+  risk_summary: { icon: ShieldAlert, label: "Checking customer risk" },
+  simulate_scenario: { icon: FlaskConical, label: "Testing a change" },
+  playbook: { icon: BookOpen, label: "Reading the playbook" },
 };
 
 const SUGGESTIONS = [
@@ -37,8 +38,8 @@ function AnswerText({ text, ok }: { text: string; ok: Set<string> }) {
         if (/^\[[a-z_]+::/.test(p)) {
           const id = p.slice(1, -1);
           const good = ok.has(id);
-          return <span key={i} title={good ? "Verified against the run's statistics" : "Not a real statistic — treat with care"}
-            className={cn("mx-0.5 rounded px-1 py-px font-mono text-[11px]", good ? "bg-teal-400/10 text-teal-300" : "bg-amber-400/10 text-amber-300 line-through decoration-amber-400/60")}>{id}</span>;
+          return <span key={i} title={good ? "Checked against your data" : "Couldn't be checked — treat with care"}
+            className={cn("mx-0.5 rounded px-1.5 py-px text-[11.5px]", good ? "bg-teal-400/10 text-teal-300" : "bg-amber-400/10 text-amber-300 line-through decoration-amber-400/60")}>{friendlyStat(id)}</span>;
         }
         if (p.startsWith("**")) return <b key={i} className="font-semibold text-zinc-50">{p.slice(2, -2)}</b>;
         return <span key={i}>{p}</span>;
@@ -153,7 +154,7 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand via-brand-2 to-brand-3"><Bot className="h-4 w-4 text-ink" /></span>
         <div>
           <div className="text-[14px] font-semibold">Ask {BRAND.name}</div>
-          <div className="font-mono text-[10.5px] text-zinc-500">answers only from your data · cites every statistic</div>
+          <div className="font-mono text-[10.5px] text-zinc-500">answers from your data and shows its sources</div>
         </div>
         <button type="button" onClick={onClose} className="ml-auto rounded-lg p-1.5 text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100" aria-label="Close copilot"><X className="h-4 w-4" /></button>
       </div>
@@ -162,7 +163,7 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
         {msgs.length === 0 && (
           <div data-cp="intro" className="flex flex-col gap-3">
             <p className="text-[13.5px] leading-[1.7] text-zinc-400">
-              Ask anything about this dataset and analysis. I query your data with read-only SQL, check segment significance, score risk and run what-ifs — and I show you each step.
+              Ask anything about your customers or this analysis. I look things up in your data, check which patterns are real, and can test changes — and I show you every step.
             </p>
             {SUGGESTIONS.map((s) => (
               <button key={s} type="button" onClick={() => send(s)}
@@ -189,10 +190,10 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
               )}
               {m.text && <AnswerText text={m.text} ok={new Set(m.citations)} />}
               {!!m.citations?.length && (
-                <div className="flex flex-wrap items-center gap-1.5 text-[10.5px] text-teal-300"><BadgeCheck className="h-3.5 w-3.5" /> {m.citations.length} citation{m.citations.length > 1 ? "s" : ""} verified</div>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10.5px] text-teal-300"><BadgeCheck className="h-3.5 w-3.5" /> {m.citations.length} source{m.citations.length > 1 ? "s" : ""} checked against your data</div>
               )}
               {!!m.unverified?.length && (
-                <div className="text-[10.5px] text-amber-300">⚠ {m.unverified.length} citation{m.unverified.length > 1 ? "s" : ""} didn&apos;t match a real statistic</div>
+                <div className="text-[10.5px] text-amber-300">⚠ {m.unverified.length} reference{m.unverified.length > 1 ? "s" : ""} couldn&apos;t be checked</div>
               )}
               {m.error && <div className="rounded-lg border border-rose-500/25 bg-rose-500/[0.06] px-3 py-2 text-[12px] text-rose-200">{m.error}</div>}
             </div>
@@ -204,7 +205,7 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
         <div className="border-beam flex items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2 pl-3.5">
           <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} disabled={busy}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-            placeholder="Ask about churn, segments, risk, what-ifs…"
+            placeholder="Ask about your customers, risk or ideas to try…"
             className="max-h-32 min-h-[36px] flex-1 resize-none bg-transparent py-2 text-[13.5px] text-zinc-100 outline-none placeholder:text-zinc-600" />
           <button type="submit" disabled={busy || !input.trim()} aria-label="Send"
             className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand via-brand-2 to-brand-3 text-ink transition-opacity disabled:opacity-40">

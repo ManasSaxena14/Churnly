@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import { Play, Sparkles } from "lucide-react";
+import { Play } from "lucide-react";
 import { NeuralScene } from "@/components/three/NeuralScene";
 import { gsap, ScrollTrigger, SplitText, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { BRAND } from "@/lib/brand";
@@ -36,7 +36,6 @@ export function Hero() {
         gsap.to(el, {
           xPercent: gsap.utils.random(-18, 18),
           yPercent: gsap.utils.random(-14, 14),
-          scale: gsap.utils.random(0.9, 1.25),
           duration: gsap.utils.random(9, 14),
           ease: "sine.inOut",
           repeat: -1,
@@ -84,19 +83,19 @@ export function Hero() {
   );
 
   const metrics = [
-    { k: pct(EVAL_RESULTS.withBH.driverPrecision), v: "driver precision", sub: `vs ${pct(EVAL_RESULTS.rawP.driverPrecision)} uncorrected` },
-    { k: pct(EVAL_RESULTS.withBH.falsePositiveRate), v: "false positives", sub: `vs ${pct(EVAL_RESULTS.rawP.falsePositiveRate)} uncorrected` },
-    { k: "21", v: "agent graph nodes", sub: "2 parallel pods · 3 gates" },
-    { k: "10k", v: "simulations per tactic", sub: "cited lift priors" },
+    { k: pct(EVAL_RESULTS.withBH.driverPrecision), v: "of flagged causes are real", sub: `vs ${pct(EVAL_RESULTS.rawP.driverPrecision)} without our checks` },
+    { k: pct(EVAL_RESULTS.withBH.falsePositiveRate), v: "false-alarm rate", sub: `vs ${pct(EVAL_RESULTS.rawP.falsePositiveRate)} without our checks` },
+    { k: "21", v: "specialist AI steps", sub: "with 3 quality checks" },
+    { k: "10k", v: "simulations per idea", sub: "based on real case studies" },
   ];
 
   return (
     <section ref={root} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
       {/* light + grid */}
       <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
-        <div data-aurora className="absolute -left-[10%] top-[-20%] h-[70vh] w-[60vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.16),transparent)] blur-2xl" />
-        <div data-aurora className="absolute right-[-10%] top-[5%] h-[75vh] w-[55vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.2),transparent)] blur-2xl" />
-        <div data-aurora className="absolute bottom-[-25%] left-[30%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.12),transparent)] blur-2xl" />
+        <div data-aurora className="absolute -left-[10%] top-[-20%] h-[70vh] w-[60vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.16),transparent)] will-change-transform" />
+        <div data-aurora className="absolute right-[-10%] top-[5%] h-[75vh] w-[55vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.2),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[-25%] left-[30%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.12),transparent)] will-change-transform" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_70%_60%_at_60%_40%,#000_20%,transparent_75%)]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-2/60 to-transparent" />
       </div>
@@ -112,13 +111,14 @@ export function Hero() {
         <div className="min-w-0">
           <div
             data-hero="badge"
-            className="border-beam mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1.5 pl-2 pr-3.5 text-[12px] text-zinc-300 backdrop-blur-md"
+            className="border-beam mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101218]/85 py-1.5 pl-3 pr-3.5 text-[12px] text-zinc-300"
           >
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-3">
-              <Sparkles className="h-3 w-3 text-ink" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
             </span>
             {BRAND.category}
-            <span className="hidden text-zinc-500 sm:inline">· LangGraph · 21 nodes</span>
+            <span className="hidden text-zinc-500 sm:inline">· 21 specialist steps</span>
           </div>
 
           <h1
@@ -133,8 +133,9 @@ export function Hero() {
           </h1>
 
           <p data-hero="sub" className="mt-6 max-w-[34rem] text-[16px] leading-[1.7] text-zinc-400 sm:text-[17px]">
-            {BRAND.name} runs survival models and corrected significance tests before any LLM speaks —
-            then 21 agents debate, simulate and cite their way to a 30-60-90 retention playbook.
+            Upload your customer data. {BRAND.name} finds what really drives churn using proven
+            statistics, then a team of AI agents turns it into a 30-60-90 day plan — with evidence
+            behind every recommendation.
           </p>
 
           <div data-hero="prompt" className="mt-9">
@@ -168,7 +169,7 @@ export function Hero() {
               </div>
             ))}
           </dl>
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">evals: {EVAL_RESULTS.source}</p>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-600">tested on {EVAL_RESULTS.datasets} sample datasets with known answers</p>
         </div>
 
         <div data-hero="console" className="hidden [perspective:1200px] lg:block">

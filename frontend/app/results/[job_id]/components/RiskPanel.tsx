@@ -79,13 +79,13 @@ export function RiskPanel({ jobId }: { jobId: string }) {
           {[1, 3, 6, 12].map((h) => (
             <button key={h} type="button" onClick={() => setHorizon(h)}
               className={cn("rounded-full px-3 py-1 transition-colors", horizon === h ? "bg-zinc-50 font-semibold text-ink" : "text-zinc-400 hover:text-zinc-100")}>
-              next {h}
+              {h === 1 ? "next period" : `next ${h}`}
             </button>
           ))}
         </div>
-        <span className="font-mono text-[11px] text-zinc-500">periods of {report.tenure_column}</span>
+        <span className="font-mono text-[11px] text-zinc-500">time units, same as &ldquo;{report.tenure_column}&rdquo;</span>
         <a href={riskCsvUrl(jobId, horizon)} className="ml-auto inline-flex h-9 items-center gap-2 rounded-full border border-white/12 px-4 text-[12.5px] text-zinc-200 transition-colors hover:border-brand/50 hover:text-zinc-50">
-          <Download className="h-3.5 w-3.5" /> Export at-risk list (.csv)
+          <Download className="h-3.5 w-3.5" /> Download at-risk list (CSV)
         </a>
       </div>
 
@@ -93,7 +93,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
       <div className="grid gap-3 lg:grid-cols-[auto_1fr_1fr]">
         <div className="flex items-center gap-5 rounded-2xl border border-white/8 bg-white/[0.02] p-5">
           <Ring parts={(["high", "medium", "low"] as const).map((t) => ({ label: t, value: s.tiers[t], color: TIER[t].color }))}
-            center={<div><div className="font-display text-[22px] font-semibold tnum"><CountUp value={s.active_customers.toLocaleString()} /></div><div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">active</div></div>} />
+            center={<div><div className="font-display text-[22px] font-semibold tnum"><CountUp value={s.active_customers.toLocaleString()} /></div><div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">customers</div></div>} />
           <div className="flex flex-col gap-2 text-[12.5px]">
             {(["high", "medium", "low"] as const).map((t) => (
               <button key={t} type="button" onClick={() => setTier(tier === t ? "" : t)}
@@ -107,20 +107,20 @@ export function RiskPanel({ jobId }: { jobId: string }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Expected to churn</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Likely to leave</div>
             <div className="mt-2 font-display text-[30px] font-semibold text-rose-300 tnum"><CountUp value={Math.round(s.expected_churners).toLocaleString()} /></div>
-            <div className="font-mono text-[11px] text-zinc-500">in the next {report.horizon} · avg {(s.mean_risk * 100).toFixed(1)}%</div>
+            <div className="font-mono text-[11px] text-zinc-500">in the next {report.horizon} · average risk {(s.mean_risk * 100).toFixed(1)}%</div>
           </div>
           <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{s.value_column ? "Value at risk" : "Highest risk"}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{s.value_column ? "Revenue at risk" : "Highest risk"}</div>
             <div className="mt-2 font-display text-[30px] font-semibold text-amber-200 tnum">
               {s.value_at_risk != null ? <CountUp value={money(s.value_at_risk)} /> : `${((rows[0]?.risk ?? 0) * 100).toFixed(0)}%`}
             </div>
-            <div className="truncate font-mono text-[11px] text-zinc-500">{s.value_column ? `Σ ${s.value_column} × churn prob.` : "single customer"}</div>
+            <div className="truncate font-mono text-[11px] text-zinc-500">{s.value_column ? `based on ${s.value_column}` : "single customer"}</div>
           </div>
         </div>
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Risk distribution</div>
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">How risk is spread</div>
           <Histogram
             bins={s.histogram.map((b) => ({ label: `${Math.round(b.from * 100)}`, value: b.count }))}
             colorFor={(i) => (i >= 5 ? "linear-gradient(#fb7185,#f97316)" : i >= 2.5 ? "linear-gradient(#fbbf24,#facc15)" : "linear-gradient(#34d399,#2dd4bf)")}
@@ -130,7 +130,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
 
       {s.top_drivers.length > 0 && (
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">What the riskiest 10% have in common</div>
+          <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">What the riskiest 10% of customers have in common</div>
           <div className="flex flex-wrap gap-2">
             {s.top_drivers.map((d) => (
               <span key={d.driver} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12.5px] text-zinc-200">
@@ -146,7 +146,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
         <div className="flex flex-wrap items-center gap-3 border-b border-white/6 px-4 py-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a customer id…"
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer ID…"
               className="h-8 w-56 rounded-full border border-white/10 bg-transparent pl-8 pr-3 text-[12.5px] outline-none placeholder:text-zinc-600 focus:border-brand/50" />
           </div>
           {tier && <button type="button" onClick={() => setTier("")} className={cn("rounded-full border px-2.5 py-0.5 text-[11px]", TIER[tier].cls)}>{TIER[tier].label} only ×</button>}
@@ -154,7 +154,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
           <span className="ml-auto font-mono text-[11px] text-zinc-500">{report.total.toLocaleString()} customers</span>
         </div>
         <div className="grid grid-cols-[minmax(0,1fr)_70px_minmax(0,1.2fr)_minmax(0,2fr)] gap-4 border-b border-white/6 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500 max-md:hidden">
-          <span>Customer</span><span>Tenure</span><span>Churn probability</span><span>Why (personal drivers)</span>
+          <span>Customer</span><span>Time as customer</span><span>Chance of leaving</span><span>Main reasons</span>
         </div>
         {rows.map((c) => (
           <div key={c.customer_id} data-risk="row" className="grid grid-cols-[minmax(0,1fr)_70px_minmax(0,1.2fr)_minmax(0,2fr)] items-center gap-4 border-b border-white/[0.04] px-4 py-2.5 text-[12.5px] transition-colors hover:bg-white/[0.025] max-md:grid-cols-[1fr_1fr]">
@@ -171,8 +171,8 @@ export function RiskPanel({ jobId }: { jobId: string }) {
             </div>
             <div className="flex min-w-0 flex-wrap gap-1.5 max-md:col-span-2">
               {c.drivers.length ? c.drivers.map((d) => (
-                <span key={d.feature} title={`${d.impact}× hazard vs average`} className="truncate rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-zinc-300">{d.label}</span>
-              )) : <span className="text-[11px] text-zinc-600">no standout driver</span>}
+                <span key={d.feature} title={`${d.impact}× the average customer's risk`} className="truncate rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-zinc-300">{d.label}</span>
+              )) : <span className="text-[11px] text-zinc-600">no single main reason</span>}
             </div>
           </div>
         ))}
@@ -184,7 +184,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
         )}
       </div>
       <p className="font-mono text-[10.5px] text-zinc-600">
-        CoxPH conditional survival: P(churn within the horizon | active today at this tenure). Drivers compare each customer to the average customer.
+        Each customer&apos;s chance of leaving within the chosen time, based on how long they&apos;ve already stayed. Reasons compare them with an average customer.
       </p>
     </div>
   );

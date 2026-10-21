@@ -19,8 +19,8 @@ export function ReasoningTrace({ trace }: { trace: string }) {
       <button className="flex w-full cursor-pointer items-center gap-4 px-[18px] py-3.5 text-left text-zinc-50" onClick={() => setOpen(!open)}>
         <span className="h-7 w-[2px] flex-shrink-0 rounded-[1px] bg-violet-600" aria-hidden="true" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-violet-600">reasoning trace · pass 1</span>
-          <span className="font-heading text-[14.5px] font-semibold italic tracking-[-0.01em] text-zinc-50">Why this playbook</span>
+          <span className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-violet-600">how the AI reached this plan</span>
+          <span className="font-heading text-[14.5px] font-semibold italic tracking-[-0.01em] text-zinc-50">Why this plan</span>
         </span>
         <span className="tnum text-[10px] tracking-[0.04em] text-zinc-500">
           {cleaned.length.toLocaleString()} chars · {paragraphs.length} paragraphs
@@ -33,7 +33,7 @@ export function ReasoningTrace({ trace }: { trace: string }) {
         <div className="grid grid-cols-[60px_1fr] border-t border-dotted border-white/8 px-[18px] pb-[22px] pt-1">
           <div className="mr-3.5 flex flex-col items-center gap-2.5 border-r border-dotted border-white/8 pt-[18px]" aria-hidden="true">
             <span className="text-base leading-none text-violet-600">↳</span>
-            <span className="rotate-180 text-[9.5px] font-semibold uppercase tracking-[0.22em] text-zinc-500 [writing-mode:vertical-rl]">reasoning trace</span>
+            <span className="rotate-180 text-[9.5px] font-semibold uppercase tracking-[0.22em] text-zinc-500 [writing-mode:vertical-rl]">AI reasoning</span>
           </div>
           <div className="pr-1 pt-[18px] font-serif text-sm leading-[1.72] tracking-[-0.003em] text-zinc-300">
             {paragraphs.map((para, i) => (

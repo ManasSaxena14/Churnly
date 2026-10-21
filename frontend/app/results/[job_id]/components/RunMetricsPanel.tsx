@@ -33,23 +33,23 @@ export function RunMetricsPanel({ metrics, complete }: { metrics: RunMetrics | n
   const maxWall = Math.max(1, ...nodes.map(([, v]) => v.wall_s ?? 0));
 
   const tiles = [
-    { k: "LLM calls", v: fmtInt(metrics.llm_calls), sub: `${metrics.llm_failures ?? 0} failed · ${metrics.fallbacks_used ?? 0} fallbacks` },
-    { k: "Tokens", v: fmtInt(metrics.total_tokens), sub: `${fmtInt(metrics.input_tokens)} in · ${fmtInt(metrics.output_tokens)} out` },
-    { k: "Latency p50 / p95", v: `${fmtSec(metrics.latency_p50_s)}`, sub: `p95 ${fmtSec(metrics.latency_p95_s)} per call` },
+    { k: "AI requests", v: fmtInt(metrics.llm_calls), sub: `${metrics.llm_failures ?? 0} retried · ${metrics.fallbacks_used ?? 0} switched model` },
+    { k: "Text processed", v: fmtInt(metrics.total_tokens), sub: `tokens · ${fmtInt(metrics.input_tokens)} read, ${fmtInt(metrics.output_tokens)} written` },
+    { k: "Typical response time", v: `${fmtSec(metrics.latency_p50_s)}`, sub: `slowest ${fmtSec(metrics.latency_p95_s)} per request` },
     {
       k: "Cost", v: fmtUsd(metrics.cost_usd),
-      sub: metrics.cost_usd == null ? "set LLM_PRICES_JSON to price models" : metrics.cost_partial ? "some models unpriced" : "list-price estimate",
+      sub: metrics.cost_usd == null ? "free tier — no charge" : metrics.cost_partial ? "partly estimated" : "estimated at list price",
     },
   ];
 
   return (
     <Section
       tone="teal"
-      title="Run telemetry"
+      title="Run details"
       meta={
         <span className="inline-flex items-center gap-2">
-          {metrics.langfuse_enabled ? <Chip tone="teal" sm>Langfuse tracing on</Chip> : <Chip tone="zinc" sm>Langfuse off</Chip>}
-          {complete || metrics.final ? "final" : "live"}
+          {metrics.langfuse_enabled ? <Chip tone="teal" sm>tracing on</Chip> : null}
+          {complete || metrics.final ? "final" : "updating live"}
         </span>
       }
     >
@@ -64,12 +64,12 @@ export function RunMetricsPanel({ metrics, complete }: { metrics: RunMetrics | n
 
         {models.length > 0 && (
           <div className="rounded-[10px] border border-white/6 bg-white/[0.02] p-3.5 md:col-span-2">
-            <MicroLabel className="mb-2.5">Calls by model</MicroLabel>
+            <MicroLabel className="mb-2.5">AI models used</MicroLabel>
             <div className="flex flex-col gap-2">
               {models.map((m) => (
                 <div key={`${m.provider}:${m.model}`} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
                   <span className="truncate font-mono text-[11px] text-zinc-300">{m.provider} · {m.model}</span>
-                  <span className="tnum text-[11px] text-zinc-500">{m.calls} · {fmtInt(m.input_tokens + m.output_tokens)} tok</span>
+                  <span className="tnum text-[11px] text-zinc-500">{m.calls} requests</span>
                   <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
                     <div data-m="bar" className={cn("h-full origin-left rounded-full", m.provider === "groq" ? "bg-amber-400/80" : "bg-teal-400/80")}
                       style={{ width: `${(m.calls / maxCalls) * 100}%` }} />
@@ -82,12 +82,12 @@ export function RunMetricsPanel({ metrics, complete }: { metrics: RunMetrics | n
 
         {nodes.length > 0 && (
           <div className="rounded-[10px] border border-white/6 bg-white/[0.02] p-3.5 md:col-span-2">
-            <MicroLabel className="mb-2.5">Slowest nodes (wall time)</MicroLabel>
+            <MicroLabel className="mb-2.5">Slowest steps</MicroLabel>
             <div className="flex flex-col gap-2">
               {nodes.map(([name, v]) => (
                 <div key={name} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
                   <span className="truncate font-mono text-[11px] text-zinc-300">{name}</span>
-                  <span className="tnum text-[11px] text-zinc-500">{fmtSec(v.wall_s)}{v.calls ? ` · ${v.calls} calls` : ""}</span>
+                  <span className="tnum text-[11px] text-zinc-500">{fmtSec(v.wall_s)}{v.calls ? ` · ${v.calls} AI requests` : ""}</span>
                   <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-white/[0.04]">
                     <div data-m="bar" className="h-full origin-left rounded-full bg-violet-400/80" style={{ width: `${((v.wall_s ?? 0) / maxWall) * 100}%` }} />
                   </div>

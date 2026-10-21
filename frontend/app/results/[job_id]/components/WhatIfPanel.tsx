@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, FlaskConical, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, FlaskConical, Loader2, Plus, Lightbulb, Trash2 } from "lucide-react";
 import { LineChart } from "@/components/charts";
 import { CountUp } from "@/components/motion";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
@@ -84,15 +84,15 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
     <div ref={root} className="grid gap-4 xl:grid-cols-[380px_1fr]">
       {/* builder */}
       <div className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-        <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand"><FlaskConical className="h-3.5 w-3.5" /> Scenario builder</div>
+        <div className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand"><FlaskConical className="h-3.5 w-3.5" /> Try a change</div>
 
         {suggestions.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-zinc-500">Suggested from your model</span>
+            <span className="text-[11px] text-zinc-500">Suggested for your data</span>
             {suggestions.map((sg) => (
               <button key={sg.label} type="button" onClick={() => { setLevers(sg.levers); run(sg.levers); }}
                 className="group flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2 text-left text-[12.5px] text-zinc-300 transition-all hover:-translate-y-px hover:border-brand/40 hover:text-zinc-50">
-                <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-brand transition-transform group-hover:rotate-12" />{sg.label}
+                <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 text-brand transition-transform group-hover:rotate-12" />{sg.label}
               </button>
             ))}
           </div>
@@ -102,7 +102,7 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
           {levers.map((l, i) => (
             <div key={i} className="flex flex-col gap-2 rounded-xl border border-white/8 bg-black/20 p-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{l.kind === "shift" ? "Move customers" : l.kind === "scale" ? "Scale a metric" : "Cap a metric"}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-500">{l.kind === "shift" ? "Move customers" : l.kind === "scale" ? "Change a number" : "Set a maximum"}</span>
                 <button type="button" onClick={() => setLevers((ls) => ls.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-rose-300"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
               {l.kind === "shift" ? (() => {
@@ -115,7 +115,7 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
                     }}>{lv.categorical.map((c) => <option key={c.column}>{c.column}</option>)}</select>
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                       <select className={SELECT} value={l.from} onChange={(e) => update(i, { from: e.target.value } as Partial<Lever>)}>
-                        {col.levels.map((v) => <option key={v.value} value={v.value}>{v.value} · HR {v.hazard_ratio}</option>)}
+                        {col.levels.map((v) => <option key={v.value} value={v.value}>{v.value} · {v.hazard_ratio}× risk</option>)}
                       </select>
                       <span className="text-zinc-500">→</span>
                       <select className={SELECT} value={l.to} onChange={(e) => update(i, { to: e.target.value } as Partial<Lever>)}>
@@ -147,18 +147,18 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
           ))}
           <div className="flex flex-wrap gap-2">
             {lv.categorical.length > 0 && <button type="button" onClick={() => addLever("shift")} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11.5px] text-zinc-300 hover:border-white/25"><Plus className="h-3 w-3" /> Move customers</button>}
-            {lv.numeric.length > 0 && <button type="button" onClick={() => addLever("scale")} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11.5px] text-zinc-300 hover:border-white/25"><Plus className="h-3 w-3" /> Scale metric</button>}
-            {lv.numeric.length > 0 && <button type="button" onClick={() => addLever("cap")} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11.5px] text-zinc-300 hover:border-white/25"><Plus className="h-3 w-3" /> Cap metric</button>}
+            {lv.numeric.length > 0 && <button type="button" onClick={() => addLever("scale")} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11.5px] text-zinc-300 hover:border-white/25"><Plus className="h-3 w-3" /> Change a number</button>}
+            {lv.numeric.length > 0 && <button type="button" onClick={() => addLever("cap")} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11.5px] text-zinc-300 hover:border-white/25"><Plus className="h-3 w-3" /> Set a maximum</button>}
           </div>
         </div>
 
         <div className="mt-auto flex items-center gap-3">
           <select className={SELECT} value={horizon} onChange={(e) => setHorizon(Number(e.target.value))}>
-            {[3, 6, 12].map((h) => <option key={h} value={h}>next {h} periods</option>)}
+            {[3, 6, 12].map((h) => <option key={h} value={h}>over the next {h}</option>)}
           </select>
           <button type="button" disabled={!levers.length || running} onClick={() => run()}
             className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand via-brand-2 to-brand-3 text-[13px] font-semibold text-ink disabled:opacity-40">
-            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <FlaskConical className="h-4 w-4" />} Run scenario
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <FlaskConical className="h-4 w-4" />} See the impact
           </button>
         </div>
         {error && <p className="text-[12px] text-rose-300">{error}</p>}
@@ -170,29 +170,29 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
           <div className="grid h-full min-h-[320px] place-items-center rounded-2xl border border-dashed border-white/10 text-center">
             <div className="max-w-sm px-6">
               <FlaskConical className="mx-auto h-8 w-8 text-zinc-600" />
-              <p className="mt-3 font-display text-[17px] font-semibold text-zinc-200">Test a retention move before you ship it</p>
-              <p className="mt-1.5 text-[13px] leading-[1.6] text-zinc-500">Pick a suggestion or build a scenario — we re-score every active customer with your survival model.</p>
+              <p className="mt-3 font-display text-[17px] font-semibold text-zinc-200">Test an idea before you try it</p>
+              <p className="mt-1.5 text-[13px] leading-[1.6] text-zinc-500">Pick a suggestion or build your own change — we&apos;ll estimate how many customers it could keep.</p>
             </div>
           </div>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-3">
               <div data-wi="out" className={cn("rounded-2xl border p-5", saved > 0 ? "border-emerald-500/25 bg-emerald-500/[0.05]" : "border-white/8 bg-white/[0.02]")}>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Customers saved</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Customers kept</div>
                 <div className={cn("mt-2 font-display text-[34px] font-semibold tnum", saved > 0 ? "text-emerald-300" : "text-zinc-200")}><CountUp value={saved.toFixed(1)} /></div>
-                <div className="font-mono text-[11px] text-zinc-500">of {result.baseline.expected_churners.toLocaleString()} expected churners</div>
+                <div className="font-mono text-[11px] text-zinc-500">out of {result.baseline.expected_churners.toLocaleString()} likely to leave</div>
               </div>
               <div data-wi="out" className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Churn in next {result.horizon}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Leaving in the next {result.horizon}</div>
                 <div className="mt-2 flex items-baseline gap-2 font-display text-[28px] font-semibold tnum">
                   <span className="text-zinc-500">{(result.baseline.churn_rate * 100).toFixed(1)}%</span>
                   <span className="text-zinc-600">→</span>
                   <span className="text-zinc-50"><CountUp value={`${(result.scenario.churn_rate * 100).toFixed(1)}%`} /></span>
                 </div>
-                <div className="font-mono text-[11px] text-zinc-500">{(result.relative_change * 100).toFixed(1)}% relative</div>
+                <div className="font-mono text-[11px] text-zinc-500">{(result.relative_change * 100).toFixed(1)}% change</div>
               </div>
               <div data-wi="out" className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{result.value_column ? "Revenue saved" : "Active customers"}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{result.value_column ? "Revenue kept" : "Customers analysed"}</div>
                 <div className="mt-2 font-display text-[28px] font-semibold text-amber-200 tnum">
                   <CountUp value={result.value_saved != null ? `$${Math.round(result.value_saved).toLocaleString()}` : result.active_customers.toLocaleString()} />
                 </div>
@@ -200,16 +200,16 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
               </div>
             </div>
             <div data-wi="out" className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-              <div className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-sky-300">Population survival · baseline vs scenario</div>
+              <div className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-sky-300">Customers staying over time · today vs with this change</div>
               <LineChart xLabel="tenure" series={[
-                { name: "Baseline", color: "#71717a", dashed: true, points: result.curve.map((p) => ({ x: p.t, y: p.baseline })) },
-                { name: "Scenario", color: "#5eead4", area: true, points: result.curve.map((p) => ({ x: p.t, y: p.scenario })) },
+                { name: "Today", color: "#71717a", dashed: true, points: result.curve.map((p) => ({ x: p.t, y: p.baseline })) },
+                { name: "With this change", color: "#5eead4", area: true, points: result.curve.map((p) => ({ x: p.t, y: p.scenario })) },
               ]} />
             </div>
             <div data-wi="out" className="rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-[12.5px] text-zinc-400">
               {result.applied.length ? (
                 <ul className="flex flex-col gap-1">{result.applied.map((a) => <li key={a}>✓ {a}</li>)}</ul>
-              ) : <p className="text-amber-200">No customers matched that change — try another lever.</p>}
+              ) : <p className="text-amber-200">No customers matched that change — try a different one.</p>}
               <p className="mt-2 text-[11.5px] text-zinc-500">{result.caveat}</p>
             </div>
           </>

@@ -24,12 +24,12 @@ export function SiteNav() {
       <nav
         className={cn(
           "flex w-full max-w-7xl items-center justify-between rounded-full px-4 py-2.5 transition-all duration-500 sm:px-5",
-          scrolled ? "border border-white/8 bg-ink/70 shadow-[0_8px_40px_rgba(0,0,0,0.4)] backdrop-blur-xl" : "border border-transparent",
+          scrolled ? "border border-white/8 bg-ink/90 shadow-[0_8px_40px_rgba(0,0,0,0.4)]" : "border border-transparent",
         )}
       >
         <Logo />
         <div className="hidden items-center gap-7 text-[13.5px] text-zinc-400 md:flex">
-          {[["How it works", "#how"], ["Output", "#product"], ["Evals", "#evals"], ["Receipts", "#receipts"], ["FAQ", "#faq"]].map(([l, h]) => (
+          {[["How it works", "#how"], ["What you get", "#product"], ["Accuracy", "#evals"], ["Evidence", "#receipts"], ["FAQ", "#faq"]].map(([l, h]) => (
             <a key={h} href={h} className="group relative py-1 transition-colors hover:text-zinc-50">
               {l}
               <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-gradient-to-r from-brand to-brand-3 transition-transform duration-300 group-hover:scale-x-100" />
@@ -52,10 +52,11 @@ export function SiteNav() {
   );
 }
 
+// Recognisable building blocks — the marquee is a "built on" strip, so it
+// names well-known tools rather than statistical method names.
 const TECH = [
-  "LangGraph", "FastAPI", "Server-Sent Events", "Gemini", "Groq · gpt-oss-120b", "ChromaDB", "HyDE",
-  "lifelines · CoxPH", "Kaplan-Meier", "Benjamini-Hochberg", "Monte Carlo", "DuckDB", "Inngest", "Langfuse",
-  "Next.js 16", "GSAP", "Three.js",
+  "Google Gemini", "Groq", "LangGraph", "Survival analysis", "Monte Carlo simulation", "FastAPI",
+  "DuckDB", "ChromaDB", "Next.js", "Three.js", "GSAP",
 ];
 
 export function TechMarquee() {
@@ -122,8 +123,8 @@ export function FinalCTA() {
           <span className="font-serif font-normal italic text-brand-gradient">you&apos;re about to lose.</span>
         </h2>
         <p data-cta="reveal" className="mx-auto mt-5 max-w-xl text-[16px] leading-[1.7] text-zinc-400">
-          A quick scan takes about 3 minutes. A deep analysis about 15. Either way you get a
-          playbook you can defend in a board meeting.
+          A quick analysis takes about 3 minutes, a deep one about 15. Either way, you get a
+          plan you can confidently share with your team.
         </p>
         <div data-cta="reveal" className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -171,11 +172,11 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 pt-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Logo />
-          <p className="mt-4 max-w-sm text-[13.5px] leading-[1.7] text-zinc-500">{BRAND.tagline}. Survival models, corrected statistics and a multi-agent graph — with a receipt for every claim.</p>
+          <p className="mt-4 max-w-sm text-[13.5px] leading-[1.7] text-zinc-500">{BRAND.tagline}. Proven statistics and a team of AI agents, with evidence behind every recommendation.</p>
         </div>
         <div className="flex flex-col gap-2.5 text-[13.5px]">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-zinc-600">Product</span>
-          {[["How it works", "#how"], ["Output", "#product"], ["Evals", "#evals"], ["FAQ", "#faq"]].map(([l, h]) => (
+          {[["How it works", "#how"], ["What you get", "#product"], ["Accuracy", "#evals"], ["FAQ", "#faq"]].map(([l, h]) => (
             <a key={h} href={h} className="w-fit text-zinc-400 transition-colors hover:text-zinc-50">{l}</a>
           ))}
         </div>
