@@ -9,6 +9,9 @@ Sessions  32-byte random token in an HttpOnly cookie. Only its SHA-256 is
           stored, so a leaked database can't be replayed as live sessions.
           Sliding 30-day expiry.
 Abuse     Failed logins are rate-limited per email and per client IP.
+Reset     No email service is needed: an admin resets a password from the
+          server with `python -m app.auth reset-password <email>`, which
+          also signs that account out everywhere.
 
 Cookie settings for deployment:
   COOKIE_SECURE=1          send the cookie over HTTPS only (set in production)
@@ -152,6 +155,20 @@ def authenticate(email: str, password: str) -> dict[str, Any] | None:
     return _public(row) if verify_password(password, row["password_hash"]) else None
 
 
+def reset_password(email: str, new_password: str) -> bool:
+    """Set a new password and end every session for that account."""
+    if len(new_password) < MIN_PASSWORD:
+        raise ValueError(f"Use at least {MIN_PASSWORD} characters for the password.")
+    with _lock:
+        row = _db().execute("SELECT id FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+        if row is None:
+            return False
+        _db().execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), row["id"]))
+        _db().execute("DELETE FROM sessions WHERE user_id = ?", (row["id"],))
+        _db().commit()
+    return True
+
+
 def start_session(user_id: str) -> str:
     token = secrets.token_urlsafe(32)
     now = time.time()
@@ -280,3 +297,21 @@ def logout(request: Request, response: Response):
 @router.get("/me")
 def me(user: dict[str, Any] = Depends(require_user)):
     return {"user": user}
+
+
+if __name__ == "__main__":
+    import getpass
+    import sys
+
+    if len(sys.argv) != 3 or sys.argv[1] != "reset-password":
+        sys.exit("usage: python -m app.auth reset-password <email>")
+    pw = getpass.getpass("New password: ")
+    if pw != getpass.getpass("Repeat it: "):
+        sys.exit("Passwords don't match.")
+    try:
+        ok = reset_password(sys.argv[2], pw)
+    except ValueError as e:
+        sys.exit(str(e))
+    if not ok:
+        sys.exit("No account with that email.")
+    print("Password updated; that account was signed out everywhere.")

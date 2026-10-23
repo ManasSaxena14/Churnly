@@ -12,6 +12,7 @@ import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { API_BASE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 import { ColumnConfirm, useColumnInspection } from "@/components/form/ColumnConfirm";
+import { SampleDataCard } from "@/components/form/SampleDataCard";
 import { LaunchOverlay, type LaunchStage } from "@/components/form/LaunchOverlay";
 import { UserMenu } from "@/components/auth/UserMenu";
 
@@ -446,6 +447,13 @@ export default function FormPage() {
                 </div>
               )}
             </div>
+
+            {!form.csvFile && (
+              <SampleDataCard onUse={(file) => {
+                set("csvFile", file);
+                if (!form.churnDefinition) set("churnDefinition", "Cancelled paid subscription");
+              }} />
+            )}
 
             {form.csvFile && (
               <div data-step-item className="mt-4">

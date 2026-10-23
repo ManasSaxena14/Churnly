@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, ArrowRight, BadgeCheck, Bot, Check, Eye, EyeOff, Loader2, Lock, Mail, Play, Sigma, User, Users } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, BadgeCheck, Bot, Check, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, Play, Sigma, User, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { NeuralScene } from "@/components/three/NeuralScene";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
@@ -34,14 +34,18 @@ function strength(pw: string): { score: number; label: string } {
 const STRENGTH_COLORS = ["bg-rose-400", "bg-amber-400", "bg-yellow-300", "bg-teal-300", "bg-emerald-400"];
 
 function Field({
-  id, label, icon: Icon, type = "text", value, onChange, autoComplete, autoFocus, error, right, inputRef,
+  id, label, labelRight, icon: Icon, type = "text", value, onChange, onKeyEvent, autoComplete, autoFocus, error, right, inputRef,
 }: {
-  id: string; label: string; icon: typeof Mail; type?: string; value: string; onChange: (v: string) => void;
+  id: string; label: string; labelRight?: React.ReactNode; icon: typeof Mail; type?: string; value: string; onChange: (v: string) => void;
+  onKeyEvent?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   autoComplete: string; autoFocus?: boolean; error?: string | null; right?: React.ReactNode; inputRef?: React.Ref<HTMLInputElement>;
 }) {
   return (
     <div data-auth="field">
-      <label htmlFor={id} className="mb-1.5 block text-[12.5px] font-medium text-zinc-300">{label}</label>
+      <div className="mb-1.5 flex items-center justify-between">
+        <label htmlFor={id} className="block text-[12.5px] font-medium text-zinc-300">{label}</label>
+        {labelRight}
+      </div>
       <div className={cn(
         "group relative flex items-center rounded-xl border bg-white/[0.03] transition-all duration-200",
         error ? "border-rose-400/60 shadow-[0_0_0_3px_rgba(251,113,133,0.12)]" : "border-white/10 focus-within:border-brand/60 focus-within:shadow-[0_0_0_3px_rgba(94,234,212,0.12)] hover:border-white/20",
@@ -49,7 +53,7 @@ function Field({
         <Icon className={cn("pointer-events-none absolute left-3.5 h-4 w-4 transition-colors", error ? "text-rose-300" : "text-zinc-500 group-focus-within:text-brand")} />
         <input
           ref={inputRef} id={id} type={type} value={value} autoComplete={autoComplete} autoFocus={autoFocus}
-          onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-err` : undefined}
+          onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyEvent} onKeyUp={onKeyEvent} aria-invalid={!!error} aria-describedby={error ? `${id}-err` : undefined}
           className="h-12 w-full rounded-xl bg-transparent pl-10 pr-11 text-[14.5px] text-zinc-50 outline-none placeholder:text-zinc-600"
         />
         {right && <div className="absolute right-2">{right}</div>}
@@ -133,6 +137,9 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; form?: string }>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const card = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const pw = useMemo(() => strength(password), [password]);
@@ -145,7 +152,11 @@ export function AuthScreen({ mode }: { mode: Mode }) {
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
-      gsap.from("[data-auth]", { y: 18, opacity: 0, stagger: 0.06, duration: 0.8, ease: "expo.out", delay: 0.1 });
+      // fromTo + clearProps: several of these elements carry CSS transitions,
+      // which made a plain from() capture a half-faded end state and leave
+      // the submit button invisible.
+      gsap.fromTo("[data-auth]", { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.06, duration: 0.8, ease: "expo.out", delay: 0.1, clearProps: "transform,opacity" });
     },
     { scope: card, dependencies: [mode] },
   );
@@ -160,6 +171,7 @@ export function AuthScreen({ mode }: { mode: Mode }) {
     if (mode === "signup" && !name.trim()) e.name = "Tell us what to call you.";
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) e.email = "Enter a valid email address.";
     if (mode === "signup" ? password.length < 8 : !password) e.password = mode === "signup" ? "Use at least 8 characters." : "Enter your password.";
+    if (mode === "signup" && !agreed) e.form = "Please accept the terms to create your account.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -194,7 +206,10 @@ export function AuthScreen({ mode }: { mode: Mode }) {
       <main className="relative flex flex-col px-4 py-6 sm:px-10">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_70%_0%,rgba(129,140,248,0.08),transparent_70%)]" />
         <div className="relative flex items-center justify-between">
-          <div className="lg:invisible"><Logo /></div>
+          <div className="lg:hidden"><Logo /></div>
+          <Link href="/" className="group hidden items-center gap-1.5 text-[13px] text-zinc-500 transition-colors hover:text-zinc-100 lg:inline-flex">
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" /> Back to home
+          </Link>
           <span className="text-[13px] text-zinc-500">
             {isSignup ? "Already have an account?" : "New to " + BRAND.name + "?"}{" "}
             <Link href={`/${isSignup ? "login" : "signup"}${params.get("next") ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-medium text-zinc-100 underline decoration-white/20 underline-offset-4 hover:decoration-brand">
@@ -232,12 +247,32 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                 <Field id="password" label="Password" icon={Lock} type={show ? "text" : "password"} value={password}
                   onChange={(v) => { setPassword(v); setErrors((e) => ({ ...e, password: undefined, form: undefined })); }}
                   autoComplete={isSignup ? "new-password" : "current-password"} error={errors.password}
+                  onKeyEvent={(e) => setCapsLock(e.getModifierState("CapsLock"))}
+                  labelRight={!isSignup && (
+                    <button type="button" onClick={() => setShowReset((v) => !v)} aria-expanded={showReset}
+                      className="text-[12px] text-zinc-500 underline-offset-4 transition-colors hover:text-brand hover:underline">
+                      Forgot password?
+                    </button>
+                  )}
                   right={
                     <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"}
                       className="grid h-8 w-8 place-items-center rounded-lg text-zinc-500 transition-colors hover:bg-white/[0.06] hover:text-zinc-200">
                       {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   } />
+                {capsLock && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-amber-300"><AlertCircle className="h-3.5 w-3.5" />Caps Lock is on</p>
+                )}
+                {!isSignup && showReset && (
+                  <div className="mt-3 flex gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3.5 text-[12.5px] leading-[1.6] text-zinc-400">
+                    <KeyRound className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand" />
+                    <div>
+                      <p className="text-zinc-200">Reset your password</p>
+                      <p className="mt-1">{BRAND.name} accounts are self-hosted, so resets are done by whoever runs this server. Ask them to run:</p>
+                      <code className="mt-2 block overflow-x-auto rounded-lg bg-black/40 px-2.5 py-1.5 font-mono text-[11.5px] text-zinc-300">python -m app.auth reset-password {email.trim() || "you@company.com"}</code>
+                    </div>
+                  </div>
+                )}
                 {isSignup && password.length > 0 && (
                   <div className="mt-2.5 flex items-center gap-3" aria-live="polite">
                     <div className="flex flex-1 gap-1.5">
@@ -252,6 +287,17 @@ export function AuthScreen({ mode }: { mode: Mode }) {
                   </div>
                 )}
               </div>
+
+              {isSignup && (
+                <label data-auth className="flex cursor-pointer items-start gap-2.5 text-[12.5px] leading-[1.55] text-zinc-400">
+                  <span className="relative mt-0.5 grid h-4 w-4 flex-shrink-0 place-items-center">
+                    <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setErrors((x) => ({ ...x, form: undefined })); }}
+                      className="peer h-4 w-4 cursor-pointer appearance-none rounded-[5px] border border-white/20 bg-white/[0.04] transition-colors checked:border-brand checked:bg-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40" />
+                    <Check className="pointer-events-none absolute h-3 w-3 text-ink opacity-0 transition-opacity peer-checked:opacity-100" strokeWidth={3.5} />
+                  </span>
+                  <span>I agree to use {BRAND.name} responsibly and only upload data I&apos;m allowed to analyse. My data stays on this server.</span>
+                </label>
+              )}
 
               <button data-auth type="submit" disabled={busy}
                 className={cn("cta-ring group relative mt-2 inline-flex h-12 items-center justify-center gap-2 overflow-hidden rounded-xl text-[14.5px] font-semibold transition-all duration-300",
