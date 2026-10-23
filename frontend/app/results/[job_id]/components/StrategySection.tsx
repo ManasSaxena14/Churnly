@@ -67,7 +67,7 @@ export function StrategySection({
       meta={`${data.created_date ? `created ${new Date(data.created_date).toLocaleDateString()} · ` : ""}${data.problems_and_solutions?.length ?? 0} problems`}
       visible={visible}
     >
-      <div className="mb-[18px] grid grid-cols-4 gap-3">
+      <div className="mb-[18px] grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
           // Long values (e.g. budget ranges) drop a size so the row height
           // stays uniform across all four cards.
@@ -84,7 +84,7 @@ export function StrategySection({
       {phases.length > 0 && (
         <>
           <SubHeading>30 / 60 / 90 day roadmap</SubHeading>
-          <div className="mb-[18px] grid grid-cols-3 gap-3">
+          <div className="mb-[18px] grid grid-cols-1 gap-3 sm:grid-cols-3">
             {phases.map((ph) => (
               <div key={ph.key} className={cn("flex flex-col rounded-[10px] border border-white/6 bg-white/[0.02] px-[18px] py-4 transition-opacity duration-200", ph.dim && "opacity-50")}>
                 <div className="mb-1 flex items-center justify-between">
@@ -186,7 +186,7 @@ export function StrategySection({
 
       {data.resource_requirements && !ctx.quickWins && (
         <Collapsible title="What you'll need" count="team · tech · budget">
-          <div className="grid grid-cols-3 gap-[18px] pt-3.5">
+          <div className="grid grid-cols-1 gap-[18px] pt-3.5 md:grid-cols-3">
             {data.resource_requirements.team && (
               <div>
                 <MicroLabel className="mb-2.5">Team</MicroLabel>

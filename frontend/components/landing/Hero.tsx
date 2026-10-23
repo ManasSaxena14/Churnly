@@ -107,7 +107,7 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_70%_at_18%_50%,rgba(7,8,11,0.9)_0%,rgba(7,8,11,0.5)_50%,transparent_80%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-b from-transparent to-ink" />
 
-      <div data-hero="content" className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-4 pb-20 pt-32 sm:px-8 grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
+      <div data-hero="content" className="mx-auto grid w-full max-w-site flex-1 items-center gap-12 px-4 pb-20 pt-32 sm:px-8 grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="min-w-0">
           <div
             data-hero="badge"
@@ -123,7 +123,7 @@ export function Hero() {
 
           <h1
             data-hero="title"
-            className="max-w-[16ch] font-display text-[42px] font-semibold leading-[1.0] tracking-[-0.045em] text-zinc-50 sm:text-[64px] lg:text-[80px]"
+            className="max-w-[16ch] font-display text-[42px] font-semibold leading-[1.0] tracking-[-0.045em] text-zinc-50 sm:text-[64px] lg:text-[80px] min-[1800px]:text-[96px] min-[2400px]:text-[116px]"
           >
             The AI analyst that{" "}
             <span data-hero="accent" className="text-shimmer inline-block pb-[0.08em] pr-[0.06em] font-serif text-[1.05em] font-normal italic tracking-[-0.02em]">
@@ -132,7 +132,7 @@ export function Hero() {
             why customers churn.
           </h1>
 
-          <p data-hero="sub" className="mt-6 max-w-[34rem] text-[16px] leading-[1.7] text-zinc-400 sm:text-[17px]">
+          <p data-hero="sub" className="mt-6 max-w-[34rem] text-[16px] leading-[1.7] text-zinc-400 sm:text-[17px] min-[1800px]:max-w-[40rem] min-[1800px]:text-[19px]">
             Upload your customer data. {BRAND.name} finds what really drives churn using proven
             statistics, then a team of AI agents turns it into a 30-60-90 day plan — with evidence
             behind every recommendation.

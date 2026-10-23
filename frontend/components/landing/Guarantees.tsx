@@ -49,7 +49,7 @@ export function Guarantees() {
   );
 
   return (
-    <section ref={root} id="why" className="relative mx-auto max-w-7xl px-4 py-28 sm:px-8">
+    <section ref={root} id="why" className="relative mx-auto max-w-site px-4 py-28 sm:px-8">
       <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Why it&apos;s different</p>
       <SplitReveal className="mt-3 max-w-3xl font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[48px]">
         No guesswork. <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">Every claim</span> is checked.

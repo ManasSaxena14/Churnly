@@ -51,7 +51,7 @@ export function SiteNav() {
       <nav
         data-nav="bar"
         className={cn(
-          "relative flex w-full max-w-6xl items-center justify-between gap-4 rounded-full py-2 pl-4 pr-2 transition-[background,border-color,box-shadow,max-width] duration-500",
+          "relative flex w-full max-w-site items-center justify-between gap-4 rounded-full py-2 pl-4 pr-2 transition-[background,border-color,box-shadow,max-width] duration-500",
           scrolled
             ? "max-w-5xl border border-white/10 bg-[#0b0d12]/92 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.04)]"
             : "border border-transparent",
@@ -215,7 +215,7 @@ export function SiteFooter() {
   const word = BRAND.name.split("");
   return (
     <footer ref={root} className="relative overflow-hidden border-t border-white/6">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 pt-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-site gap-10 px-4 pt-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Logo />
           <p className="mt-4 max-w-sm text-[13.5px] leading-[1.7] text-zinc-500">{BRAND.tagline}. Proven statistics and a team of AI agents, with evidence behind every recommendation.</p>
@@ -233,7 +233,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div aria-hidden="true" className="mx-auto mt-10 max-w-7xl select-none overflow-hidden px-2 sm:px-6">
+      <div aria-hidden="true" className="mx-auto mt-10 max-w-site select-none overflow-hidden px-2 sm:px-6">
         <div
           data-ft="fill"
           className="flex justify-center bg-[linear-gradient(100deg,#5eead4_0%,#818cf8_30%,#e879f9_50%,rgba(255,255,255,0.05)_60%,rgba(255,255,255,0.05)_100%)] bg-[length:250%_100%] bg-clip-text font-display text-[22vw] font-bold leading-[0.82] tracking-[-0.07em] text-transparent lg:text-[260px]"
@@ -244,7 +244,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 border-t border-white/6 px-4 py-6 text-[12px] text-zinc-600 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <div className="mx-auto flex max-w-site flex-col gap-2 border-t border-white/6 px-4 py-6 text-[12px] text-zinc-600 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <span>© {new Date().getFullYear()} {BRAND.name}</span>
         <span>
           Built on the open-source{" "}

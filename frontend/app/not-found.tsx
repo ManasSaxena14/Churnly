@@ -28,7 +28,7 @@ export default function NotFound() {
     <div ref={root} className="grain relative flex min-h-screen flex-col overflow-hidden bg-ink text-zinc-50">
       <RetentionOrbit retainRef={retain} className="absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_45%_40%_at_50%_50%,rgba(7,8,11,0.9),transparent_75%)]" />
-      <header className="relative z-10 mx-auto w-full max-w-7xl px-4 py-5 sm:px-8"><Logo /></header>
+      <header className="relative z-10 mx-auto w-full max-w-site px-4 py-5 sm:px-8"><Logo /></header>
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-24 text-center">
         <div className="flex overflow-hidden font-display text-[120px] font-bold leading-none tracking-[-0.06em] sm:text-[200px]">
           <span data-nf="digit" className="inline-block">4</span>

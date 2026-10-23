@@ -101,7 +101,7 @@ export function PipelineScroll() {
 
   return (
     <section ref={root} id="how" className="relative overflow-hidden py-24 lg:flex lg:h-screen lg:flex-col lg:justify-center lg:py-0">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8">
+      <div className="mx-auto w-full max-w-site px-4 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">How it thinks</p>
@@ -121,7 +121,7 @@ export function PipelineScroll() {
 
       <div
         ref={track}
-        className="mx-auto mt-10 flex max-w-7xl flex-col gap-4 px-4 sm:px-8 lg:mx-0 lg:max-w-none lg:flex-row lg:gap-6 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:pr-24"
+        className="mx-auto mt-10 flex max-w-site flex-col gap-4 px-4 sm:px-8 lg:mx-0 lg:max-w-none lg:flex-row lg:gap-6 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:pr-24"
       >
         {STAGES.map((s, i) => {
           const Visual = STAGE_VISUALS[i];

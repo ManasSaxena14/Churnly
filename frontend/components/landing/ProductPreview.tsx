@@ -63,7 +63,7 @@ export function ProductPreview() {
   );
 
   return (
-    <section ref={root} id="product" className="relative mx-auto max-w-7xl px-4 py-28 sm:px-8">
+    <section ref={root} id="product" className="relative mx-auto max-w-site px-4 py-28 sm:px-8">
       <div className="mx-auto max-w-3xl text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">What you get</p>
         <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[48px]">

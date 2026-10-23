@@ -118,7 +118,7 @@ export function ChurnProfileSection({ data, ctx, visible }: { data: ChurnProfile
       {/* Two columns of equal height: probability card left, milestone grid +
           stacked cohort rows right. Cohort rows flex-grow to absorb any height
           difference so neither column ever shows a dead zone. */}
-      <div className="grid grid-cols-[1.1fr_1fr] items-stretch gap-3">
+      <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-[1.1fr_1fr]">
         <div className="flex flex-col rounded-[10px] border border-white/6 bg-white/[0.02] p-5">
           <MicroLabel className="mb-2.5 text-blue-500">Churn probability at month {month}</MicroLabel>
           <div className="tnum text-[44px] font-bold leading-none tracking-[-0.03em] text-zinc-50">

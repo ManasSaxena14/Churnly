@@ -26,7 +26,7 @@ function AppHeader() {
   return (
     <header ref={header} className="sticky top-0 z-40 px-3 pt-3 will-change-transform">
       <nav className={cn(
-        "relative mx-auto flex max-w-7xl items-center gap-4 rounded-full py-2 pl-4 pr-2 transition-[background,border-color,box-shadow] duration-500",
+        "relative mx-auto flex max-w-app items-center gap-4 rounded-full py-2 pl-4 pr-2 transition-[background,border-color,box-shadow] duration-500",
         scrolled
           ? "border border-white/10 bg-[#0b0d12]/92 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.04)]"
           : "border border-white/6 bg-white/[0.02]",
@@ -76,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,#000,transparent_80%)]" />
       </div>
       <AppHeader />
-      <main className="relative mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-8">{children}</main>
+      <main className="relative mx-auto max-w-app px-4 pb-24 pt-10 sm:px-8 2xl:px-12">{children}</main>
     </div>
   );
 }

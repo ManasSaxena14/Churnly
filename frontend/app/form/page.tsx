@@ -16,6 +16,13 @@ import { SampleDataCard } from "@/components/form/SampleDataCard";
 import { LaunchOverlay, type LaunchStage } from "@/components/form/LaunchOverlay";
 import { UserMenu } from "@/components/auth/UserMenu";
 
+const OUTCOMES: [string, string][] = [
+  ["Risk score for every customer", "Who is likely to leave next, and why — exportable as CSV."],
+  ["Churn drivers that are real", "Patterns are checked with statistics before the AI explains them."],
+  ["A 30-60-90 day plan", "Concrete actions ranked for your goal, segment and constraints."],
+  ["Simulated impact", "Each idea comes with a likely range of customers saved."],
+];
+
 /* ─── types ────────────────────────────────────────────────────── */
 
 interface FormData {
@@ -599,7 +606,7 @@ export default function FormPage() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-white/6 bg-ink/75 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-16 w-full max-w-site items-center justify-between px-4 sm:px-6">
           <Logo />
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="hidden text-[13px] text-zinc-500 transition-colors hover:text-zinc-200 sm:inline">Dashboard</Link>
@@ -614,9 +621,9 @@ export default function FormPage() {
         </div>
       </header>
 
-      <main className="relative mx-auto flex w-full max-w-6xl flex-1 gap-14 px-4 pb-24 pt-10 sm:px-6 lg:pt-16">
+      <main className="relative mx-auto flex w-full max-w-site flex-1 gap-14 px-4 pb-24 pt-10 sm:px-6 lg:pt-16 2xl:gap-20">
         {/* step rail */}
-        <aside className="sticky top-32 hidden h-fit w-64 flex-shrink-0 lg:block">
+        <aside className="sticky top-32 hidden h-fit w-64 flex-shrink-0 lg:block 2xl:w-72">
           <div className="relative pl-6">
             <div className="absolute bottom-2 left-[5px] top-2 w-px bg-white/8" />
             <div data-rail="fill" className="absolute bottom-2 left-[5px] top-2 w-px origin-top scale-y-0 bg-gradient-to-b from-brand to-violet-400" />
@@ -646,12 +653,34 @@ export default function FormPage() {
         </aside>
 
         {/* step content */}
-        <div ref={panelRef} key={step} className="w-full min-w-0 max-w-[680px]">
+        <div ref={panelRef} key={step} className="w-full min-w-0 max-w-[680px] flex-1 xl:max-w-[760px] 2xl:max-w-[880px]">
           <p data-step-item className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
             Step {step + 1} · {STEPS[step].label}
           </p>
           {renderStep()}
         </div>
+
+        {/* what you get — fills the right side on wide screens */}
+        <aside className="sticky top-32 ml-auto hidden h-fit w-72 flex-shrink-0 min-[1440px]:block">
+          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+            <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-brand">What you&apos;ll get</p>
+            <ul className="mt-4 flex flex-col gap-3.5">
+              {OUTCOMES.map(([title, body]) => (
+                <li key={title} className="flex gap-3">
+                  <span className="mt-0.5 grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-brand/12"><Check className="h-3 w-3 text-brand" strokeWidth={3} /></span>
+                  <span>
+                    <span className="block text-[13px] font-medium text-zinc-200">{title}</span>
+                    <span className="mt-0.5 block text-[12px] leading-[1.55] text-zinc-500">{body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-white/6 pt-4">
+              <div><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-600">Typical run</p><p className="mt-1 text-[13px] text-zinc-200">~2 minutes</p></div>
+              <div><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-zinc-600">Your data</p><p className="mt-1 text-[13px] text-zinc-200">Stays private</p></div>
+            </div>
+          </div>
+        </aside>
       </main>
     </div>
   );

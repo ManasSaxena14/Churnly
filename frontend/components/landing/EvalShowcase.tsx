@@ -44,7 +44,7 @@ export function EvalShowcase() {
 
   return (
     <section ref={root} id="evals" className="relative border-y border-white/6 bg-[linear-gradient(180deg,rgba(94,234,212,0.03),transparent_40%)]">
-      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-28 sm:px-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="mx-auto grid max-w-site gap-14 px-4 py-28 sm:px-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">Proven accuracy</p>
           <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[44px]">

@@ -106,7 +106,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
             <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Likely to leave</div>
             <div className="mt-2 font-display text-[30px] font-semibold text-rose-300 tnum"><CountUp value={Math.round(s.expected_churners).toLocaleString()} /></div>

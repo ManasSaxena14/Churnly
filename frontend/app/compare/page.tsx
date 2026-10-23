@@ -27,10 +27,10 @@ function Picker() {
   return (
     <div className="flex flex-wrap items-end gap-3">
       {[["Before (A)", a, setA], ["After (B)", b, setB]].map(([lbl, val, set]) => (
-        <label key={lbl as string} className="flex flex-col gap-1.5">
+        <label key={lbl as string} className="flex w-full flex-col gap-1.5 sm:w-auto">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-zinc-500">{lbl as string}</span>
           <select value={val as string} onChange={(e) => (set as (v: string) => void)(e.target.value)}
-            className="h-10 min-w-[240px] rounded-xl border border-white/10 bg-ink px-3 text-[13.5px] text-zinc-100 outline-none focus:border-brand/50">
+            className="h-10 w-full min-w-0 max-w-full rounded-xl sm:w-auto sm:min-w-[240px] border border-white/10 bg-ink px-3 text-[13.5px] text-zinc-100 outline-none focus:border-brand/50">
             <option value="">Choose an analysis…</option>
             {runs.map((r) => <option key={r.job_id} value={r.job_id}>{label(r)}</option>)}
           </select>

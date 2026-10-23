@@ -5,6 +5,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Page widths that grow with the screen: 1280px on laptops, ~86–92% of the
+   viewport on large monitors, capped so lines never get absurdly long. */
+@theme {
+  --container-site: clamp(80rem, 86vw, 118rem);
+  --container-app: clamp(80rem, 92vw, 132rem);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

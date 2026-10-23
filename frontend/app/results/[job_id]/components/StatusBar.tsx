@@ -30,14 +30,14 @@ export function StatusBar({
         <StatusDot tone={complete ? "emerald" : hitlOpen ? "violet" : "amber"} pulse={!complete} />
         <span className="truncate">{text}</span>
       </div>
-      <div className="flex flex-shrink-0 items-center gap-2.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-2.5">
         {jobStartTs !== null && (
           <span className="tnum inline-flex items-center gap-1.5 border-l border-white/6 pl-3 text-[11px] font-medium text-zinc-400" title="total job elapsed">
             <span className="text-[11px] opacity-50" aria-hidden="true">⏱</span>
             {fmtElapsed((complete && jobEndTs ? jobEndTs : now) - jobStartTs)}
           </span>
         )}
-        <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">{completedCount} of 6 steps done</span>
+        <span className="hidden text-[11px] uppercase tracking-[0.04em] text-zinc-500 sm:inline">{completedCount} of 6 steps done</span>
         {!complete && connectionStatus !== "cancelled" && connectionStatus !== "error" && (
           <StatusBtn variant="danger" onClick={onCancel} disabled={isCancelling} title="Cancel the running analysis">
             {isCancelling ? "■ Cancelling…" : "■ Cancel"}

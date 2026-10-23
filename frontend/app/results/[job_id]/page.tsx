@@ -241,7 +241,7 @@ export default function ResultsPage() {
             />
           )}
 
-          <div className="mx-auto w-full max-w-[1180px] px-4 pb-20 sm:px-10">
+          <div className="mx-auto w-full max-w-app px-4 pb-20 sm:px-10 2xl:px-14">
             <div className="flex flex-wrap items-end justify-between gap-6 pb-8 pt-10">
               <div>
                 <p data-hdr className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-brand">
@@ -258,7 +258,7 @@ export default function ResultsPage() {
                   <span>{ctx.segment}</span>
                 </div>
               </div>
-              <div data-hdr className="flex items-center gap-2">
+              <div data-hdr className="flex flex-wrap items-center gap-2">
                 {exportButtons}
                 {isDemo ? (
                   <>

@@ -54,7 +54,7 @@ export function Sidebar({
     ...(!ctx.canShip ? [{ k: "Can ship", v: "No", why: <>Steps that need engineering work are marked <em className="not-italic text-violet-600">&quot;Needs eng&quot;</em>.</> }] : []),
   ];
   return (
-    <aside className="sticky top-0 flex h-screen w-60 flex-shrink-0 flex-col gap-6 overflow-y-auto border-r border-white/6 bg-[#0a0b0e]/90 backdrop-blur-xl px-[18px] py-5">
+    <aside className="sticky top-0 hidden h-screen w-60 flex-shrink-0 lg:flex flex-col gap-6 overflow-y-auto border-r border-white/6 bg-[#0a0b0e]/90 backdrop-blur-xl px-[18px] py-5">
       <div className="flex items-center gap-2.5">
         <Link href="/" aria-label={`${BRAND.name} home`}><LogoMark className="h-6 w-6" /></Link>
         <div>

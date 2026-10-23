@@ -205,7 +205,7 @@ export function EvidenceDrawer({
             {stat ? (
               <>
                 <div className="tnum mb-3 inline-block rounded border border-amber-500/25 bg-amber-500/8 px-2 py-1 text-[11px] text-zinc-50">{stat.stat_id}</div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Churn rate</div>
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-amber-500">{(stat.churn_rate * 100).toFixed(1)}%</div>

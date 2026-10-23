@@ -34,7 +34,7 @@ export function ReceiptChain() {
   );
 
   return (
-    <section ref={root} id="receipts" className="mx-auto grid max-w-7xl gap-14 px-4 py-28 sm:px-8 lg:grid-cols-2">
+    <section ref={root} id="receipts" className="mx-auto grid max-w-site gap-14 px-4 py-28 sm:px-8 lg:grid-cols-2">
       <div className="lg:sticky lg:top-28 lg:self-start">
         <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">The evidence trail</p>
         <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[44px]">

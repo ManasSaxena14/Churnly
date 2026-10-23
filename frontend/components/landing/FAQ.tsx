@@ -73,7 +73,7 @@ function Item({ q, a, open, onToggle }: { q: string; a: string; open: boolean; o
 export function FAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section id="faq" className="mx-auto grid max-w-7xl gap-12 px-4 py-28 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+    <section id="faq" className="mx-auto grid max-w-site gap-12 px-4 py-28 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
       <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-brand">FAQ</p>
         <SplitReveal className="mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.035em] text-zinc-50 sm:text-[44px]">

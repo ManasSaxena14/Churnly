@@ -104,7 +104,7 @@ export function DiagnosisSection({
       )}
 
       {(forensicArr.length > 0 || patternArr.length > 0) && (
-        <div className="mt-3.5 grid grid-cols-2 gap-3">
+        <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {forensicArr.length > 0 && (
             <DxCard title="Key findings" badge={<Chip tone="zinc" sm>{forensicArr.length} citations</Chip>}>
               <div className="flex flex-col gap-2">

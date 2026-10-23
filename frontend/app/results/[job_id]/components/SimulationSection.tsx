@@ -30,7 +30,7 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
         below are realistic ranges — not best-case guesses.
       </p>
 
-      <div className="mb-3.5 grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-3">
+      <div className="mb-3.5 grid grid-cols-2 gap-3 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <Stat
           label="Likely improvement"
           tone="teal"
@@ -68,7 +68,7 @@ export function SimulationSection({ data, visible }: { data: SimulationData; vis
             const endPct = (it.p90 / maxX) * 100;
             const meanPct = (it.mean / maxX) * 100;
             return (
-              <div key={i} className="grid grid-cols-[200px_1fr_70px] items-center gap-3.5 border-t border-white/6 py-2.5 first:border-t-0 first:pt-1">
+              <div key={i} className="grid grid-cols-[110px_1fr_56px] items-center sm:grid-cols-[200px_1fr_70px] gap-3.5 border-t border-white/6 py-2.5 first:border-t-0 first:pt-1">
                 <div>
                   <div className="text-[12.5px] text-zinc-50">{it.name || `Intervention ${i + 1}`}</div>
                   {it.lift_prior_anchor === "rag" && (

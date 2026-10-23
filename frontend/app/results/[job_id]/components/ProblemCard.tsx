@@ -43,7 +43,7 @@ export function ProblemCard({ p, ctx, defaultOpen }: { p: ProblemSolution; ctx: 
       <div className="mb-3.5 text-[11px] tracking-[0.02em] text-zinc-500">
         <b className="font-medium text-zinc-50">Affects:</b> {p.problem.affected_segment} · <b className="font-medium text-zinc-50">Current impact:</b> {p.problem.current_impact}
       </div>
-      <div className="mb-3.5 grid grid-cols-4 gap-2.5 border-y border-white/6 py-3">
+      <div className="mb-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4 border-y border-white/6 py-3">
         {[
           { label: "Lift", val: `+${p.retention_impact.estimated_lift_percent}%`, emerald: true },
           { label: "Revenue", val: p.retention_impact.estimated_revenue_impact },
