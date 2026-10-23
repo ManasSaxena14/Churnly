@@ -342,12 +342,12 @@
 /* Route transition (app/template.tsx) */
 .route-curtain {
   transform-origin: top;
-  animation: curtain-lift 0.7s cubic-bezier(0.83, 0, 0.17, 1) 0.32s forwards;
+  animation: curtain-lift 0.42s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
 }
-.route-mark { animation: mark-bloom 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.route-glow { animation: glow-bloom 0.9s ease-out both; }
-.route-sweep { left: -40%; animation: sweep 0.75s cubic-bezier(0.65, 0, 0.35, 1) 0.05s both; }
-.route-page { animation: page-in 0.7s ease-out 0.4s both; }
+.route-mark { animation: mark-bloom 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.route-glow { animation: glow-bloom 0.4s ease-out both; }
+.route-sweep { left: -40%; animation: sweep 0.45s cubic-bezier(0.65, 0, 0.35, 1) both; }
+.route-page { animation: page-in 0.35s ease-out 0.1s both; }
 @keyframes curtain-lift {
   from { transform: translateY(0); }
   to { transform: translateY(-100%); visibility: hidden; }

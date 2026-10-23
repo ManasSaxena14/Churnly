@@ -1,7 +1,8 @@
 import { LogoMark } from "@/components/brand/Logo";
 
-/* Route transition: re-mounts on every navigation.
-   1. the brand mark blooms in the centre of an ink curtain,
+/* Route transition: re-mounts on every navigation. Kept under ~0.5s so a
+   click never feels blocked:
+   1. the brand mark flashes in the centre of an ink curtain,
    2. a light sweep crosses it,
    3. the curtain lifts away as the new page fades up.
    Pure CSS (see .route-* in globals.css) so a slow script or a background tab

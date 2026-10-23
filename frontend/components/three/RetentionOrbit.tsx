@@ -258,7 +258,7 @@ export function RetentionOrbit({
     io.observe(mount);
 
     // ── loop ────────────────────────────────────────────────────
-    const clock = new THREE.Clock();
+    const t0 = performance.now();
     let raf = 0;
     let retainSmoothed = 0;
     let lastFrame = performance.now();
@@ -268,7 +268,7 @@ export function RetentionOrbit({
       const dt = (nowMs - lastFrame) / 1000;
       lastFrame = nowMs;
       if (!visible || !pageVisible) return;
-      const t = clock.getElapsedTime();
+      const t = (performance.now() - t0) / 1000;
       uniforms.uTime.value = reduced ? 12 : t;
       const target = retainRef?.current ?? 0;
       retainSmoothed += (target - retainSmoothed) * 0.08;

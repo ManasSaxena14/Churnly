@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export function SmoothScroll() {
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: true, wheelMultiplier: 0.95 });
+    const lenis = new Lenis({ lerp: 0.14, smoothWheel: true });
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
@@ -77,7 +77,7 @@ export function CursorGlow() {
     <div
       ref={dot}
       aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[1] -ml-[220px] -mt-[220px] h-[440px] w-[440px] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.10),rgba(94,234,212,0.05)_45%,transparent)] opacity-0 transition-opacity duration-500"
+      className="pointer-events-none fixed left-0 top-0 z-[1] will-change-transform -ml-[220px] -mt-[220px] h-[440px] w-[440px] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.10),rgba(94,234,212,0.05)_45%,transparent)] opacity-0 transition-opacity duration-500"
     />
   );
 }
