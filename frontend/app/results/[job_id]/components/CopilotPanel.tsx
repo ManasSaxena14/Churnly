@@ -90,14 +90,18 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
   useGSAP(
     () => {
       if (!panel.current) return;
-      // first run (closed) just parks it off-screen; later toggles animate
+      // Chat window grows out of the launcher in the bottom-right corner.
+      const shown = { autoAlpha: 1, scale: 1, y: 0 };
+      const hidden = { autoAlpha: 0, scale: 0.94, y: 18 };
+      gsap.set(panel.current, { transformOrigin: "100% 100%" });
       if (!mounted.current || prefersReducedMotion()) {
         mounted.current = true;
-        gsap.set(panel.current, { xPercent: open ? 0 : 105 });
+        gsap.set(panel.current, open ? shown : hidden);
         return;
       }
-      gsap.to(panel.current, { xPercent: open ? 0 : 105, duration: 0.7, ease: "expo.out" });
-      if (open) gsap.from("[data-cp='intro'] > *", { y: 14, opacity: 0, stagger: 0.06, duration: 0.6, ease: "power3.out", delay: 0.15 });
+      gsap.to(panel.current, { ...(open ? shown : hidden), duration: open ? 0.45 : 0.25, ease: open ? "expo.out" : "power2.in" });
+      if (open) gsap.fromTo("[data-cp='intro'] > *", { y: 12, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.05, duration: 0.5, ease: "power3.out", delay: 0.1, clearProps: "transform,opacity" });
     },
     { scope: panel, dependencies: [open] },
   );
@@ -147,9 +151,9 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
   };
 
   return (
-    <div ref={panel} data-lenis-prevent
-      className="fixed inset-y-0 right-0 z-[70] flex w-full flex-col border-l border-white/10 bg-[#0a0b0f]/95 shadow-[-30px_0_80px_-20px_rgba(129,140,248,0.35)] backdrop-blur-xl sm:w-[460px]"
-      style={{ transform: "translateX(105%)" }} aria-hidden={!open} inert={!open}>
+    <div ref={panel} data-lenis-prevent role="dialog" aria-label={`Ask ${BRAND.name}`}
+      className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[#0b0c10] sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(680px,calc(100vh-8rem))] sm:w-[420px] sm:rounded-2xl sm:border sm:border-white/10 sm:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.02)]"
+      style={{ opacity: 0, visibility: "hidden" }} aria-hidden={!open} inert={!open}>
       <div className="flex items-center gap-3 border-b border-white/8 px-5 py-4">
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand via-brand-2 to-brand-3"><Bot className="h-4 w-4 text-ink" /></span>
         <div>
@@ -217,20 +221,31 @@ export function CopilotPanel({ jobId, open, onClose }: { jobId: string; open: bo
   );
 }
 
-/* Floating launcher, bottom-right. */
-export function CopilotLauncher({ onClick }: { onClick: () => void }) {
+/* Chat launcher, bottom-right. Stays visible as the open/close toggle. */
+export function CopilotLauncher({ open, onClick }: { open: boolean; onClick: () => void }) {
   const el = useRef<HTMLButtonElement>(null);
   useGSAP(() => {
     if (prefersReducedMotion()) return;
-    gsap.from(el.current, { y: 40, scale: 0.8, opacity: 0, duration: 0.8, ease: "back.out(1.8)", delay: 0.6 });
+    gsap.fromTo(el.current, { y: 30, scale: 0.85, opacity: 0 },
+      { y: 0, scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.7)", delay: 0.5, clearProps: "transform,opacity" });
   });
+  // Lift task toasts above the launcher while it's on screen.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--toast-offset", "72px");
+    return () => { document.documentElement.style.removeProperty("--toast-offset"); };
+  }, []);
   return (
-    <button ref={el} type="button" onClick={onClick}
-      className="border-beam group fixed bottom-6 right-6 z-[65] inline-flex h-12 items-center gap-2 rounded-full border border-white/12 bg-[#0d0f14]/90 pl-3 pr-5 text-[13.5px] font-medium text-zinc-100 shadow-[0_16px_50px_-10px_rgba(129,140,248,0.55)] backdrop-blur-xl transition-transform hover:scale-[1.03]">
-      <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-brand via-brand-2 to-brand-3">
-        <Bot className="h-4 w-4 text-ink transition-transform duration-500 group-hover:rotate-12" />
+    <button ref={el} type="button" onClick={onClick} aria-expanded={open} aria-label={open ? "Close chat" : `Ask ${BRAND.name}`}
+      className={cn(
+        "group fixed bottom-6 right-6 z-[75] inline-flex h-14 items-center gap-2.5 rounded-full border border-white/12 bg-[#0d0f14] text-[14px] font-medium text-zinc-100 shadow-[0_18px_50px_-12px_rgba(0,0,0,0.9),0_0_0_1px_rgba(94,234,212,0.08)] transition-[padding,background-color,border-color] duration-300 hover:border-brand/40",
+        open ? "w-14 justify-center" : "pl-2 pr-5",
+        open && "max-sm:hidden",
+      )}>
+      <span className={cn("grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 transition-transform duration-300", open && "rotate-90 scale-90")}>
+        {open ? <X className="h-4.5 w-4.5 text-ink" strokeWidth={2.5} /> : <Bot className="h-5 w-5 text-ink" />}
       </span>
-      Ask {BRAND.name}
+      {!open && <span>Ask {BRAND.name}</span>}
+      {!open && <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-[#0d0f14] bg-brand" />}
     </button>
   );
 }

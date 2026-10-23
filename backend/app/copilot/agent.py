@@ -17,6 +17,8 @@ steps (tool calls, results) and then the answer.
 
 from __future__ import annotations
 
+import os
+
 import json
 import re
 from typing import Any, Iterator
@@ -200,7 +202,8 @@ def ask_copilot(ds: RunDataset, question: str, history: list[dict[str, str]] | N
     by_name = {t.name: t for t in tools}
     if llm is None:
         from app.config import get_llm
-        llm = get_llm("gemini", temperature=0.1)
+        # Interactive: give up on a slow model sooner and use the next one.
+        llm = get_llm("gemini", temperature=0.1, timeout_s=float(os.getenv("COPILOT_TIMEOUT_S", "20")))
     bound = llm.bind_tools(tools)
 
     msgs: list[Any] = [SystemMessage(content=SYSTEM.format(rows=len(ds.df), schema=_schema(ds), context=_run_context(ds)))]

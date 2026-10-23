@@ -319,7 +319,7 @@ export default function ResultsPage() {
 
         {analyticsReady && (
           <>
-            {!copilotOpen && <CopilotLauncher onClick={() => setCopilotOpen(true)} />}
+            <CopilotLauncher open={copilotOpen} onClick={() => setCopilotOpen((o) => !o)} />
             <CopilotPanel jobId={jobId} open={copilotOpen} onClose={() => setCopilotOpen(false)} />
           </>
         )}

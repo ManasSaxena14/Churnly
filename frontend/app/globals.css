@@ -211,9 +211,11 @@
 }
 
 /* Rotating gradient hairline — badges and the prompt bar. */
-.border-beam {
-  position: relative;
-  isolation: isolate;
+@layer components {
+  .border-beam {
+    position: relative;
+    isolation: isolate;
+  }
 }
 .border-beam::before {
   content: "";
@@ -283,9 +285,11 @@
   initial-value: 0deg;
   inherits: false;
 }
-.cta-ring {
-  position: relative;
-  isolation: isolate;
+@layer components {
+  .cta-ring {
+    position: relative;
+    isolation: isolate;
+  }
 }
 .cta-ring::before {
   content: "";

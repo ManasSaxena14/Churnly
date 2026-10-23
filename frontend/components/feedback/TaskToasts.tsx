@@ -79,7 +79,7 @@ export function TaskToasts() {
   useEffect(() => onCelebrate((c) => setItems((xs) => [...xs, c].slice(-MAX_VISIBLE))), []);
   const done = useCallback((id: number) => setItems((xs) => xs.filter((x) => x.id !== id)), []);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed bottom-5 right-4 z-[120] flex flex-col items-end gap-2.5 sm:right-6">
+    <div aria-live="polite" className="pointer-events-none fixed bottom-[calc(1.25rem+var(--toast-offset,0px))] right-4 z-[120] flex flex-col items-end gap-2.5 sm:right-6">
       {items.map((c) => <TaskToast key={c.id} c={c} onDone={done} />)}
     </div>
   );

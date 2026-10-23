@@ -125,10 +125,11 @@ def _next_live_idx(provider: str) -> int:
         return idx
 
 
-def _build_raw_llm(provider: str, api_key: str, model: str | None, temperature: float, **kwargs):
+def _build_raw_llm(provider: str, api_key: str, model: str | None, temperature: float, timeout_s: float | None = None, **kwargs):
+    timeout_s = timeout_s or LLM_TIMEOUT_S
     if provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
-        kwargs.setdefault("timeout", LLM_TIMEOUT_S)
+        kwargs.setdefault("timeout", timeout_s)
         kwargs.setdefault("max_retries", 0)  # FailoverLLM owns retries
         return ChatGoogleGenerativeAI(
             model=model or GEMINI_FAST_MODEL,
@@ -144,7 +145,7 @@ def _build_raw_llm(provider: str, api_key: str, model: str | None, temperature: 
         # failures at medium, 4/4 pass at low). Low is also faster (~3s).
         if "gpt-oss" in resolved and "reasoning_effort" not in kwargs:
             kwargs["reasoning_effort"] = "low"
-        kwargs.setdefault("request_timeout", LLM_TIMEOUT_S)
+        kwargs.setdefault("request_timeout", timeout_s)
         kwargs.setdefault("max_retries", 0)
         return ChatGroq(
             model=resolved,
@@ -230,10 +231,11 @@ LLM_TIMEOUT_S = float(os.getenv("LLM_TIMEOUT_S", "45"))
 
 
 def _is_timeout(e: Exception) -> bool:
-    """Our own client-side request timeout (LLM_TIMEOUT_S), not a provider's
-    server-side 'deadline exceeded', which is worth a normal retry."""
+    """The per-request time limit was hit. Gemini enforces our limit on its side
+    and answers 504 DEADLINE_EXCEEDED, so that counts too — retrying the same
+    slow model would just wait the full limit again."""
     text = f"{type(e).__name__} {e}".lower()
-    return "timeout" in text or "timed out" in text
+    return any(t in text for t in ("timeout", "timed out", "deadline_exceeded", "deadline expired", "deadline exceeded"))
 _BACKOFF_BASE_SECONDS = float(os.getenv("LLM_BACKOFF_BASE_SECONDS", "1.0"))
 _BACKOFF_MAX_SECONDS = 8.0
 _MAX_CONCURRENCY = max(1, int(os.getenv("LLM_MAX_CONCURRENCY", "6")))
@@ -282,8 +284,10 @@ class FailoverLLM:
     - `.with_structured_output(schema).invoke(prompt)`
     """
 
-    def __init__(self, provider: str, model: str | None = None, temperature: float = 0.3, **kwargs):
+    def __init__(self, provider: str, model: str | None = None, temperature: float = 0.3,
+                 timeout_s: float | None = None, **kwargs):
         self.provider = provider
+        self.timeout_s = timeout_s  # per-request limit for every target in the chain
         self.model = model
         self.temperature = temperature
         self.kwargs = kwargs  # provider-specific; only applied to the primary provider
@@ -312,7 +316,7 @@ class FailoverLLM:
         pool = _pool(provider)
         self._idx = _next_live_idx(provider)
         kwargs = self.kwargs if provider == self.provider else {}
-        self._llm = _build_raw_llm(provider, pool[self._idx], model, self.temperature, **kwargs)
+        self._llm = _build_raw_llm(provider, pool[self._idx], model, self.temperature, timeout_s=self.timeout_s, **kwargs)
         print(f"[LLM Factory] {provider}:{model} using slot {self._idx + 1}/{len(pool)}")
 
     def _structured_kwargs(self, so_kwargs: dict) -> dict:
@@ -466,11 +470,12 @@ def get_llm(
     provider: Literal["gemini", "groq"] = "gemini",
     model: str | None = None,
     temperature: float = 0.3,
+    timeout_s: float | None = None,
     **kwargs,
 ) -> FailoverLLM:
     """Return a FailoverLLM. Picks key via round-robin, rotates on rate-limit,
     falls back across models/providers when one can't serve the call."""
-    return FailoverLLM(provider, model=model, temperature=temperature, **kwargs)
+    return FailoverLLM(provider, model=model, temperature=temperature, timeout_s=timeout_s, **kwargs)
 
 
 def pool_status() -> dict[str, dict[str, Any]]:
