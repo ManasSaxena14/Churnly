@@ -2,6 +2,7 @@ from fastapi import FastAPI, Body, HTTPException, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import logging
 import uuid
 import traceback
 import inngest
@@ -132,8 +133,12 @@ inngest_client = inngest.Inngest(
 )
 async def analyze_retention_job(*args, **kwargs):
     ctx = kwargs.get('ctx') or (args[0] if len(args) > 0 else None)
-    step = kwargs.get('step') or getattr(ctx, 'step', None)
-    
+    return await _run_analysis_job(ctx, kwargs.get('step') or getattr(ctx, 'step', None))
+
+
+async def _run_analysis_job(ctx, step):
+    """The analysis job body, shared by the Inngest function and the in-process
+    runner used when no Inngest server is reachable."""
     if not step:
         raise ValueError("Inngest step runner could not be resolved from context or arguments.")
     
@@ -373,6 +378,62 @@ async def analyze_retention_job(*args, **kwargs):
 
 graph = build_retention_graph()
 
+
+# ── Job dispatch ─────────────────────────────────────────────────────────
+# JOB_RUNNER=auto (default): use Inngest when it's reachable — Inngest Cloud
+# when INNGEST_EVENT_KEY is set, else the local dev server — and otherwise run
+# the job inside this process so an analysis never sits queued with nothing
+# to pick it up. JOB_RUNNER=inngest / inline forces one or the other.
+JOB_RUNNER = os.getenv("JOB_RUNNER", "auto").strip().lower()
+INNGEST_DEV_URL = os.getenv("INNGEST_BASE_URL") or os.getenv("INNGEST_DEV_URL") or "http://127.0.0.1:8288"
+_inline_jobs: set[asyncio.Task] = set()
+
+
+class _InlineStep:
+    async def run(self, _name, fn):
+        return await fn()
+
+
+async def _inngest_reachable() -> bool:
+    if os.getenv("INNGEST_EVENT_KEY"):
+        return True
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=0.8) as client:
+            await client.get(INNGEST_DEV_URL)
+        return True
+    except httpx.HTTPError:
+        return False
+
+
+def _start_inline(data: Dict[str, Any]) -> None:
+    from types import SimpleNamespace
+    ctx = SimpleNamespace(event=SimpleNamespace(data=data), logger=logging.getLogger("churnly.jobs"))
+
+    async def run():
+        try:
+            await _run_analysis_job(ctx, _InlineStep())
+        except Exception:
+            pass  # already reported to the stream and saved by the job itself
+
+    task = asyncio.create_task(run())
+    _inline_jobs.add(task)
+    task.add_done_callback(_inline_jobs.discard)
+
+
+async def _dispatch_job(data: Dict[str, Any]) -> str:
+    """Start an analysis; returns which runner took it."""
+    if JOB_RUNNER != "inline" and (JOB_RUNNER == "inngest" or await _inngest_reachable()):
+        try:
+            await inngest_client.send(inngest.Event(name="app/analyze", data=data))
+            return "inngest"
+        except Exception:
+            if JOB_RUNNER == "inngest":
+                raise
+            logging.getLogger("churnly.jobs").warning("Inngest send failed; running the job in-process.", exc_info=True)
+    _start_inline(data)
+    return "inline"
+
 @app.get("/")
 async def root():
     return {"message": "Churnly API running"}
@@ -446,14 +507,8 @@ async def run_analysis(
         req_body["job_id"] = job_id
         req_body["owner_id"] = user["id"]
         
-        # Send event to Inngest to trigger the background job
-        await inngest_client.send(
-            inngest.Event(
-                name="app/analyze",
-                data=req_body
-            )
-        )
-        return {"status": "queued", "job_id": job_id, "message": "Analysis started in background"}
+        runner = await _dispatch_job(req_body)
+        return {"status": "queued", "job_id": job_id, "runner": runner, "message": "Analysis started in background"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e) + "\n" + traceback.format_exc())
 

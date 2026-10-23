@@ -5,7 +5,10 @@ Provides `get_llm()` returning a `FailoverLLM` wrapper:
 - Picks next key via round-robin on each new instance.
 - On a rate-limit / quota / bad-key error, rotates to the next key of the same
   provider until that provider's pool is exhausted.
-- On transient errors (timeouts, 5xx, "overloaded") retries with exponential
+- Every request has a hard timeout (LLM_TIMEOUT_S, default 45s). A request
+  that times out moves straight to the next target in the chain instead of
+  waiting again — a stalled provider can't freeze the pipeline.
+- On other transient errors (5xx, "overloaded") retries with exponential
   backoff + jitter.
 - When a provider/model can't serve the call (pool exhausted, model not found,
   retries used up) it falls back to the next (provider, model) in the chain,
@@ -125,6 +128,8 @@ def _next_live_idx(provider: str) -> int:
 def _build_raw_llm(provider: str, api_key: str, model: str | None, temperature: float, **kwargs):
     if provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
+        kwargs.setdefault("timeout", LLM_TIMEOUT_S)
+        kwargs.setdefault("max_retries", 0)  # FailoverLLM owns retries
         return ChatGoogleGenerativeAI(
             model=model or GEMINI_FAST_MODEL,
             google_api_key=api_key,
@@ -139,6 +144,8 @@ def _build_raw_llm(provider: str, api_key: str, model: str | None, temperature: 
         # failures at medium, 4/4 pass at low). Low is also faster (~3s).
         if "gpt-oss" in resolved and "reasoning_effort" not in kwargs:
             kwargs["reasoning_effort"] = "low"
+        kwargs.setdefault("request_timeout", LLM_TIMEOUT_S)
+        kwargs.setdefault("max_retries", 0)
         return ChatGroq(
             model=resolved,
             groq_api_key=api_key,
@@ -219,6 +226,14 @@ def classify_error(e: Exception) -> Literal["rate_limit", "bad_key", "model_unav
 # ── Fallback chain ───────────────────────────────────────────────────────
 
 _MAX_TRANSIENT_RETRIES = int(os.getenv("LLM_MAX_TRANSIENT_RETRIES", "2"))
+LLM_TIMEOUT_S = float(os.getenv("LLM_TIMEOUT_S", "45"))
+
+
+def _is_timeout(e: Exception) -> bool:
+    """Our own client-side request timeout (LLM_TIMEOUT_S), not a provider's
+    server-side 'deadline exceeded', which is worth a normal retry."""
+    text = f"{type(e).__name__} {e}".lower()
+    return "timeout" in text or "timed out" in text
 _BACKOFF_BASE_SECONDS = float(os.getenv("LLM_BACKOFF_BASE_SECONDS", "1.0"))
 _BACKOFF_MAX_SECONDS = 8.0
 _MAX_CONCURRENCY = max(1, int(os.getenv("LLM_MAX_CONCURRENCY", "6")))
@@ -368,6 +383,9 @@ class FailoverLLM:
                             break  # pool exhausted → next target in chain
                         self._rotate()
                         continue
+                    if kind == "transient" and _is_timeout(e):
+                        print(f"[LLM Factory] {provider}:{model} timed out → next target", flush=True)
+                        break
                     if kind == "transient":
                         transient_failures += 1
                         if transient_failures > _MAX_TRANSIENT_RETRIES:

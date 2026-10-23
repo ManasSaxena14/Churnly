@@ -107,6 +107,10 @@ export default function ResultsPage() {
   const analyticsReady = isDemo || connectionStatus === "complete";
   const hitlOpen = !!hitlData && !stream.hitlSubmitted;
   const completedCount = Object.values(pipelineState).filter(v => v === "done").length;
+  // Celebrate only a run that finished while this page was open — not one
+  // reopened later (its last stage ended long before the page's clock).
+  const finishedAt = Math.max(0, ...Object.values(stream.stageEndTs));
+  const finishedLive = finishedAt > 0 && Math.abs(stream.now - finishedAt) < 30_000;
 
   /* Actions */
   const respondToHitl = async (answers: Record<string, string>) => {
@@ -208,7 +212,7 @@ export default function ResultsPage() {
         <div data-aurora className="absolute bottom-[-25%] right-[-10%] h-[60vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.08),transparent)] will-change-transform" />
         <div data-aurora className="absolute bottom-[20%] left-[20%] h-[40vh] w-[30vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.04),transparent)] will-change-transform" />
       </div>
-      <CompletionBurst complete={complete && !isDemo} />
+      <CompletionBurst complete={complete && !isDemo && finishedLive} />
       <div className="relative flex min-h-screen">
         <Sidebar
           pipelineState={pipelineState}

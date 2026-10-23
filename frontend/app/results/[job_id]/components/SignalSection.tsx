@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import type { Ctx, RiskData } from "../types";
 import { Chip, Insight, Section, Stat } from "./primitives";
 
@@ -15,7 +14,7 @@ export function SignalSection({ data, visible }: { data: RiskData; ctx: Ctx; vis
       meta={`${data.total_active.toLocaleString()} active customers · model accuracy ${data.confidence}%`}
       visible={visible}
     >
-      <div className={cn("grid gap-3", fs ? "grid-cols-5" : "grid-cols-3")}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
         <Stat label="Customers at high risk" tone="amber" value={data.high_risk_count.toLocaleString()} sub={`of ${data.total_active.toLocaleString()} active`} />
         <Stat label="At risk" tone="amber" value={`${data.risk_pct.toFixed(1)}%`} sub="of active customers" />
         <Stat label="Model accuracy" value={`${data.confidence}%`} sub="how well it ranks risk" />
