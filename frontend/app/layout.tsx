@@ -4,6 +4,9 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { CursorGlow } from "@/components/motion";
+import { AuthProvider } from "@/lib/auth";
+import { RouteProgress } from "@/components/feedback/RouteProgress";
+import { TaskToasts } from "@/components/feedback/TaskToasts";
 
 // Geist (Vercel's typeface) for UI + display, Geist Mono for data and code,
 // Instrument Serif italic for the editorial accent words.
@@ -52,7 +55,9 @@ export default function RootLayout({
           }}
         />
         <CursorGlow />
-        {children}
+        <RouteProgress />
+        <AuthProvider>{children}</AuthProvider>
+        <TaskToasts />
       </body>
     </html>
   );

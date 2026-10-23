@@ -13,6 +13,7 @@ import { API_BASE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 import { ColumnConfirm, useColumnInspection } from "@/components/form/ColumnConfirm";
 import { LaunchOverlay, type LaunchStage } from "@/components/form/LaunchOverlay";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 /* ─── types ────────────────────────────────────────────────────── */
 
@@ -297,7 +298,7 @@ export default function FormPage() {
         const formData = new FormData();
         formData.append("file", form.csvFile);
 
-        const uploadRes = await fetch(`${API_BASE}/upload`, {
+        const uploadRes = await fetch(`${API_BASE}/upload`, { credentials: "include",
           method: "POST",
           body: formData,
         });
@@ -355,7 +356,7 @@ export default function FormPage() {
       sessionStorage.setItem("latest_form_state", JSON.stringify(form));
 
       setLaunchStage("queue");
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await fetch(`${API_BASE}/analyze`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -613,6 +614,7 @@ export default function FormPage() {
           <Logo />
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="hidden text-[13px] text-zinc-500 transition-colors hover:text-zinc-200 sm:inline">Dashboard</Link>
+            <UserMenu />
             {step > 0 && (
               <button type="button" onClick={prev} className="inline-flex items-center gap-1 text-[13px] text-zinc-500 transition-colors hover:text-zinc-200">
                 <ChevronLeft className="h-3.5 w-3.5" /> Back

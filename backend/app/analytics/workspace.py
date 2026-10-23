@@ -56,13 +56,20 @@ def _summarize(run: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def list_runs(limit: int = 50) -> dict[str, Any]:
+def list_runs(limit: int = 50, owner_id: str | None = None) -> dict[str, Any]:
+    """Runs owned by `owner_id` (plus legacy runs saved before accounts existed)."""
     rows = []
     if RUNS_DIR.exists():
-        files = sorted(RUNS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]
+        files = sorted(RUNS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
         for p in files:
+            if len(rows) >= limit:
+                break
             try:
-                rows.append(_summarize(json.loads(p.read_text())))
+                run = json.loads(p.read_text())
+                owner = (run.get("meta") or {}).get("owner")
+                if owner_id is not None and owner not in (None, owner_id):
+                    continue
+                rows.append(_summarize(run))
             except Exception:
                 continue
     done = [r for r in rows if r["status"] == "complete"]

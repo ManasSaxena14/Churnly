@@ -6,13 +6,12 @@ import { ReceiptChain } from "@/components/landing/ReceiptChain";
 import { FinalCTA, SiteFooter, SiteNav, TechMarquee } from "@/components/landing/Chrome";
 import { ProductPreview } from "@/components/landing/ProductPreview";
 import { FAQ } from "@/components/landing/FAQ";
-import { ScrollProgress, SmoothScroll } from "@/components/motion";
+import { SmoothScroll } from "@/components/motion";
 
 export default function HomePage() {
   return (
     <div className="grain relative min-h-screen w-full overflow-x-clip bg-ink text-zinc-50">
       <SmoothScroll />
-      <ScrollProgress />
       <SiteNav />
       <main>
         <Hero />

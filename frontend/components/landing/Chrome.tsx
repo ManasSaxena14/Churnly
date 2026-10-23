@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -8,52 +8,98 @@ import { RetentionOrbit } from "@/components/three/RetentionOrbit";
 import { BRAND } from "@/lib/brand";
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { useStartDemo } from "@/lib/useStartDemo";
+import { useAuth } from "@/lib/auth";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { cn } from "@/lib/utils";
+import { MobileMenu, NavProgress, PillLinks, useHeadroom } from "@/components/nav/PillNav";
+
+const SECTIONS = [
+  { key: "how", label: "How it works", href: "#how" },
+  { key: "product", label: "What you get", href: "#product" },
+  { key: "evals", label: "Accuracy", href: "#evals" },
+  { key: "receipts", label: "Evidence", href: "#receipts" },
+  { key: "faq", label: "FAQ", href: "#faq" },
+];
 
 export function SiteNav() {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const header = useRef<HTMLElement>(null);
+  const scrolled = useHeadroom(header);
+  const [active, setActive] = useState<string | null>(null);
+
+  // Scroll-spy: the link for the section in view lights up.
+  useGSAP(() => {
+    SECTIONS.forEach(({ key }) => {
+      const el = document.getElementById(key);
+      if (!el) return;
+      ScrollTrigger.create({
+        trigger: el, start: "top 55%", end: "bottom 55%",
+        onToggle: (self) => { if (self.isActive) setActive(key); else setActive((a) => (a === key ? null : a)); },
+      });
+    });
+  });
+
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+      gsap.from("[data-nav='bar']", { y: -24, opacity: 0, duration: 1, ease: "expo.out", delay: 0.2 });
+    },
+    { scope: header },
+  );
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3">
+    <header ref={header} className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 will-change-transform">
       <nav
+        data-nav="bar"
         className={cn(
-          "flex w-full max-w-7xl items-center justify-between rounded-full px-4 py-2.5 transition-all duration-500 sm:px-5",
-          scrolled ? "border border-white/8 bg-ink/90 shadow-[0_8px_40px_rgba(0,0,0,0.4)]" : "border border-transparent",
+          "relative flex w-full max-w-6xl items-center justify-between gap-4 rounded-full py-2 pl-4 pr-2 transition-[background,border-color,box-shadow,max-width] duration-500",
+          scrolled
+            ? "max-w-5xl border border-white/10 bg-[#0b0d12]/92 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            : "border border-transparent",
         )}
       >
         <Logo />
-        <div className="hidden items-center gap-7 text-[13.5px] text-zinc-400 md:flex">
-          {[["How it works", "#how"], ["What you get", "#product"], ["Accuracy", "#evals"], ["Evidence", "#receipts"], ["FAQ", "#faq"]].map(([l, h]) => (
-            <a key={h} href={h} className="group relative py-1 transition-colors hover:text-zinc-50">
-              {l}
-              <span className="absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 bg-gradient-to-r from-brand to-brand-3 transition-transform duration-300 group-hover:scale-x-100" />
-            </a>
-          ))}
-        </div>
+        <PillLinks items={SECTIONS} active={active} className="hidden md:flex" />
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="hidden h-9 items-center rounded-full border border-white/10 px-4 text-[13px] text-zinc-300 transition-colors hover:border-white/25 hover:text-zinc-50 sm:inline-flex">
-            Dashboard
-          </Link>
-          <Link
-            href="/form"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-zinc-50 px-4 text-[13px] font-semibold text-ink transition-transform hover:scale-[1.03]"
-          >
-            Start <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <NavAuth />
+          <MobileMenu items={SECTIONS} footer={<MobileAuth />} />
         </div>
+        {scrolled && <NavProgress />}
       </nav>
     </header>
   );
 }
 
+/* Auth buttons inside the mobile sheet. */
+function MobileAuth() {
+  const { status } = useAuth();
+  return status === "authed" ? (
+    <Link href="/dashboard" className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-zinc-50 text-[15px] font-semibold text-ink">
+      Open dashboard <ArrowRight className="h-4 w-4" />
+    </Link>
+  ) : (
+    <div className="grid grid-cols-2 gap-3">
+      <Link href="/login" className="flex h-12 items-center justify-center rounded-2xl border border-white/12 text-[15px] text-zinc-100">Log in</Link>
+      <Link href="/signup" className="flex h-12 items-center justify-center rounded-2xl bg-zinc-50 text-[15px] font-semibold text-ink">Sign up</Link>
+    </div>
+  );
+}
+
 // Recognisable building blocks — the marquee is a "built on" strip, so it
 // names well-known tools rather than statistical method names.
+/* Logged in: Dashboard + avatar menu. Logged out: Log in + Sign up. */
+function NavAuth() {
+  const { status } = useAuth();
+  if (status !== "authed") return <UserMenu className="max-md:hidden" />;
+  return (
+    <div className="flex items-center gap-2">
+      <Link href="/dashboard" className="hidden h-9 items-center gap-1.5 rounded-full border border-white/10 px-4 text-[13px] text-zinc-300 transition-colors hover:border-white/25 hover:text-zinc-50 sm:inline-flex">
+        Dashboard <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+      <UserMenu />
+    </div>
+  );
+}
+
 const TECH = [
   "Google Gemini", "Groq", "LangGraph", "Survival analysis", "Monte Carlo simulation", "FastAPI",
   "DuckDB", "ChromaDB", "Next.js", "Three.js", "GSAP",

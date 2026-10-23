@@ -31,6 +31,7 @@ import { WhatIfPanel } from "./components/WhatIfPanel";
 import { CopilotLauncher, CopilotPanel } from "./components/CopilotPanel";
 import { ResultTabs, type ResultTab } from "./components/ResultTabs";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify } from "./export";
+import { celebrate } from "@/lib/celebrate";
 
 // The stage timer re-renders this page every second while a run is live.
 // Memoised sections only re-render when their own stage data arrives, so the
@@ -111,11 +112,12 @@ export default function ResultsPage() {
   const respondToHitl = async (answers: Record<string, string>) => {
     setHitlSubmitting(true);
     try {
-      await fetch(`${API_BASE}/analyze/${jobId}/respond`, {
+      await fetch(`${API_BASE}/analyze/${jobId}/respond`, { credentials: "include",
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
       stream.markHitlSubmitted();
+      celebrate("Answers sent", { description: "The agent is folding your context into the analysis." });
     } finally { setHitlSubmitting(false); }
   };
   const handleHitlSubmit = (answers: string[]) =>
@@ -128,7 +130,7 @@ export default function ResultsPage() {
     const data = reportDataFromStages(jobId, stagesData, stream.metrics);
     if (!data) return toast.error("The playbook isn't ready yet.");
     downloadText(`${slugify(data.playbook.title)}.md`, playbookToMarkdown(data));
-    toast.success("Markdown downloaded");
+    celebrate("Playbook exported", { description: "Markdown saved to your downloads." });
   };
   const exportButtons = playbook ? (
     <>
@@ -152,7 +154,7 @@ export default function ResultsPage() {
     if (!confirm("Cancel this analysis? In-flight work will be discarded.")) return;
     setIsCancelling(true);
     try {
-      const res = await fetch(`${API_BASE}/analyze/${jobId}/cancel`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/analyze/${jobId}/cancel`, { credentials: "include", method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       // Backend pushes a `cancelled` SSE event; UI updates from that handler.
       // If SSE already dropped, force-set state here so user gets feedback.
@@ -182,13 +184,13 @@ export default function ResultsPage() {
       if (csvText) {
         const fd = new FormData();
         fd.append("file", new File([csvText], csvName, { type: "text/csv" }));
-        const up = await fetch(`${API_BASE}/upload`, { method: "POST", body: fd });
+        const up = await fetch(`${API_BASE}/upload`, { credentials: "include", method: "POST", body: fd });
         if (up.ok) {
           payload.raw_csv_path = (await up.json()).file_path;
         }
       }
 
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await fetch(`${API_BASE}/analyze`, { credentials: "include",
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });

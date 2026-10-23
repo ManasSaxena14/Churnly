@@ -239,7 +239,7 @@ export function useAnalysisStream(jobId: string) {
       return () => { cancelled = true; timers.forEach(clearTimeout); };
     }
 
-    const sse = new EventSource(`${API_BASE}/analyze/stream/${jobId}`);
+    const sse = new EventSource(`${API_BASE}/analyze/stream/${jobId}`, { withCredentials: true });
     sseRef.current = sse;
     closeSource = () => { sse.close(); sseRef.current = null; };
     sse.onopen = () => setConnectionStatus("connected");

@@ -51,7 +51,7 @@ _GEMINI_KEYS: list[str] = _discover_keys("GOOGLE_API_KEY")
 _GROQ_KEYS:   list[str] = _discover_keys("GROQ_API_KEY")
 
 # ── Model selection ──────────────────────────────────────────────────────
-# Bench 2026-07-07 (see CLAUDE.md "LLM latency bench"): gemini-3-flash-preview
+# Latency bench 2026-07-07: gemini-3-flash-preview
 # had 15s–350s tail latency on structured calls; 3.1-flash-lite does the same
 # call in ~2s. Lite thinks OFF by default — do NOT pass thinking_level to it.
 # Override with env vars if your key doesn't have access to these models.

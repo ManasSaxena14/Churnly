@@ -7,6 +7,7 @@ import { CountUp } from "@/components/motion";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { getRisk, riskCsvUrl, type RiskCustomer, type RiskReport } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { celebrate } from "@/lib/celebrate";
 
 const TIER = {
   high: { label: "High", cls: "border-rose-400/30 bg-rose-400/10 text-rose-300", bar: "from-rose-500 to-orange-400", color: "#fb7185" },
@@ -84,7 +85,7 @@ export function RiskPanel({ jobId }: { jobId: string }) {
           ))}
         </div>
         <span className="font-mono text-[11px] text-zinc-500">time units, same as &ldquo;{report.tenure_column}&rdquo;</span>
-        <a href={riskCsvUrl(jobId, horizon)} className="ml-auto inline-flex h-9 items-center gap-2 rounded-full border border-white/12 px-4 text-[12.5px] text-zinc-200 transition-colors hover:border-brand/50 hover:text-zinc-50">
+        <a href={riskCsvUrl(jobId, horizon)} onClick={() => celebrate("Risk list exporting", { description: `Customer scores for the ${horizon}-day horizon, as CSV.` })} className="ml-auto inline-flex h-9 items-center gap-2 rounded-full border border-white/12 px-4 text-[12.5px] text-zinc-200 transition-colors hover:border-brand/50 hover:text-zinc-50">
           <Download className="h-3.5 w-3.5" /> Download at-risk list (CSV)
         </a>
       </div>

@@ -144,8 +144,8 @@ RuntimeError: All gemini API keys exhausted (rate-limited).
 
 ## Adding a new provider
 
-1. Update `_build_raw_llm(provider, api_key, model, temperature, **kwargs)` with an `elif provider == "anthropic": ...` branch.
-2. Add the provider's keys to `_discover_keys()` (e.g. `ANTHROPIC_API_KEY[_N]`).
+1. Update `_build_raw_llm(provider, api_key, model, temperature, **kwargs)` with an `elif provider == "mistral": ...` branch.
+2. Add the provider's keys to `_discover_keys()` (e.g. `MISTRAL_API_KEY[_N]`).
 3. Update `_pool(provider)` to return the new list.
 4. Add the provider literal to `get_llm`'s type hint.
 

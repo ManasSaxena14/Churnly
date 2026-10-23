@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { celebrate } from "@/lib/celebrate";
 
 const COLORS = ["#5eead4", "#818cf8", "#e879f9", "#a5f3fc", "#fde68a"];
 
@@ -17,6 +18,7 @@ export function CompletionBurst({ complete }: { complete: boolean }) {
       wasComplete.current = complete;
       return;
     }
+    if (complete && !wasComplete.current) celebrate("Analysis complete", { description: "Your retention playbook is ready.", durationMs: 5200 });
     if (complete && !wasComplete.current && !prefersReducedMotion()) {
       const t = setTimeout(() => setFire((n) => n + 1), 0);
       wasComplete.current = true;

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { friendlyStat } from "@/lib/labels";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify, type ReportData } from "../export";
 import type { ProblemSolution, RunMetrics } from "../types";
+import { celebrate } from "@/lib/celebrate";
 
 /* Printable playbook. "Save as PDF" uses the browser's print engine, which
    gives real selectable text and proper page breaks (no canvas screenshots).
@@ -49,7 +50,7 @@ async function loadReport(jobId: string): Promise<ReportData | null> {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}`);
+    const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}`, { credentials: "include" });
     if (!res.ok) return null;
     const run = await res.json();
     const { stages, metrics } = foldEvents(run.events ?? []);
@@ -163,6 +164,7 @@ export default function ReportPage() {
   const exportMd = () => {
     if (!data) return;
     downloadText(`${slugify(data.playbook.title)}.md`, playbookToMarkdown(data));
+    celebrate("Playbook exported", { description: "Markdown saved to your downloads." });
   };
 
   if (state !== "ready" || !data) {

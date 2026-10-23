@@ -13,7 +13,7 @@ export class ApiError extends Error {
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { cache: "no-store", ...init });
+    res = await fetch(`${API_BASE}${path}`, { credentials: "include", cache: "no-store", ...init });
   } catch {
     throw new ApiError(0, `Can't reach the backend at ${API_BASE}.`);
   }
@@ -125,7 +125,7 @@ export async function askCopilot(
   jobId: string, question: string, history: { role: "user" | "assistant"; content: string }[],
   onEvent: (e: CopilotEvent) => void, signal?: AbortSignal,
 ) {
-  const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}/copilot`, {
+  const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}/copilot`, { credentials: "include",
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, history }), signal,
   });

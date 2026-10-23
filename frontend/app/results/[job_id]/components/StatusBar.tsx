@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { fmtElapsed } from "../lib";
 import type { ConnectionStatus, ErrorInfo } from "../useAnalysisStream";
 import { StatusBtn, StatusDot } from "./primitives";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export function StatusBar({
   text, hitlOpen, complete, completedCount,
@@ -45,6 +46,7 @@ export function StatusBar({
         <StatusBtn onClick={onRerun} disabled={isRerunning}>
           {isRerunning ? "↻ Running…" : "↻ Rerun"}
         </StatusBtn>
+        <UserMenu compactAuthLinks className="ml-1" />
       </div>
     </div>
   );

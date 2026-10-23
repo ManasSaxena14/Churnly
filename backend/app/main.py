@@ -76,16 +76,48 @@ def _prewarm_rag() -> None:
 
     threading.Thread(target=_warm, daemon=True, name="rag-prewarm").start()
 
-# Comma-separated list, e.g. "https://churnly.vercel.app,http://localhost:3000".
-# Defaults to "*" for local dev; set it in production.
-_allowed_origins = [o.strip() for o in (os.getenv("ALLOWED_ORIGINS") or "*").split(",") if o.strip()]
+# Comma-separated list, e.g. "https://churnly.vercel.app". Login uses cookies,
+# which browsers only send cross-origin to an explicit allow-list (never "*").
+# Unset = local dev: any http://localhost:<port> / 127.0.0.1:<port> is allowed,
+# so `next dev` still works when it picks a port other than 3000.
+_allowed_origins = [o.strip() for o in (os.getenv("ALLOWED_ORIGINS") or "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=None if _allowed_origins else r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=_allowed_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Accounts ─────────────────────────────────────────────────────────────
+from fastapi import Depends
+from app.auth import optional_user, require_user, router as auth_router
+
+app.include_router(auth_router)
+
+
+def _owner_ok(owner: str | None, user: dict | None) -> bool:
+    # Runs saved before accounts existed carry no owner; on a self-hosted
+    # install they belong to whoever is logged in.
+    return user is not None and (owner is None or owner == user["id"])
+
+
+def _check_job(job_id: str, user: dict | None) -> None:
+    """404 (not 403) for other people's runs, so ids can't be probed."""
+    stream = active_streams.get(job_id)
+    if stream is not None:
+        owner = stream.get("owner")
+    else:
+        run = load_run(job_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        owner = (run.get("meta") or {}).get("owner")
+    if user is None:
+        raise HTTPException(status_code=401, detail="Please log in to continue.")
+    if not _owner_ok(owner, user):
+        raise HTTPException(status_code=404, detail="Run not found")
+
 
 # Create an Inngest client
 inngest_client = inngest.Inngest(
@@ -138,6 +170,7 @@ async def analyze_retention_job(*args, **kwargs):
                     "dataset_name": event_data.get("dataset_name") or os.path.basename(str(initial_state.get("raw_csv_path") or "")),
                     "business_model": (initial_state.get("questionnaire") or {}).get("business_model"),
                     "analysis_depth": (initial_state.get("questionnaire") or {}).get("analysis_depth"),
+                    "owner": event_data.get("owner_id"),
                 }
                 save_run(job_id, list(stream.get("events", [])), status, metrics, meta)
             obs.langfuse_flush()
@@ -349,7 +382,7 @@ async def healthz():
     return {"ok": True}
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), user: dict = Depends(require_user)):
     file_extension = os.path.splitext(file.filename or "")[1].lower()
     if file_extension != ".csv":
         raise HTTPException(status_code=400, detail="Only .csv files are accepted.")
@@ -374,7 +407,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @app.post("/columns")
-async def inspect_columns(body: Dict[str, Any] = Body(...)):
+async def inspect_columns(body: Dict[str, Any] = Body(...), user: dict = Depends(require_user)):
     """Column-confirmation screen: detected roles, per-column profile, validation.
 
     Body: {"file_path": "<upload id>", "mapping": {role: column | null}?}
@@ -397,7 +430,8 @@ async def run_analysis(
             "raw_csv_path": "data/sample.csv",
             "questionnaire": {"industry": "SaaS", "size": "100-500"}
         }]
-    )
+    ),
+    user: dict = Depends(require_user),
 ):
     try:
         job_id = str(uuid.uuid4())
@@ -407,8 +441,10 @@ async def run_analysis(
             "hitl_event": asyncio.Event(),
             "hitl_answers": {},
             "cancelled": False,
+            "owner": user["id"],
         }
         req_body["job_id"] = job_id
+        req_body["owner_id"] = user["id"]
         
         # Send event to Inngest to trigger the background job
         await inngest_client.send(
@@ -446,7 +482,10 @@ from app.analytics.compare import compare_runs
 from app.analytics.workspace import list_runs
 
 
-def _dataset(job_id: str):
+def _dataset(job_id: str, user: dict | None):
+    """Load a run's dataset for its owner. The cached demo is public."""
+    if job_id != "demo":
+        _check_job(job_id, user)
     try:
         return load_run_dataset(job_id)
     except KeyError:
@@ -460,15 +499,16 @@ def _horizon(h: float) -> float:
 
 
 @app.get("/runs")
-def workspace_runs(limit: int = 50):
-    """Dashboard: one summary per saved run + portfolio KPIs."""
-    return list_runs(limit=min(max(limit, 1), 200))
+def workspace_runs(limit: int = 50, user: dict = Depends(require_user)):
+    """Dashboard: one summary per saved run (yours) + portfolio KPIs."""
+    return list_runs(limit=min(max(limit, 1), 200), owner_id=user["id"])
 
 
 @app.get("/runs/{job_id}/risk")
-def run_risk(job_id: str, horizon: float = 3, tier: str | None = None, limit: int = 50, offset: int = 0, q: str | None = None):
+def run_risk(job_id: str, horizon: float = 3, tier: str | None = None, limit: int = 50, offset: int = 0, q: str | None = None,
+             user: dict | None = Depends(optional_user)):
     """Per-customer churn probability within `horizon` periods + personal drivers."""
-    ds = _dataset(job_id)
+    ds = _dataset(job_id, user)
     try:
         return risk_mod.risk_report(ds, horizon=_horizon(horizon), tier=tier, limit=min(max(limit, 1), 500), offset=max(offset, 0), q=q)
     except ValueError as e:
@@ -476,8 +516,8 @@ def run_risk(job_id: str, horizon: float = 3, tier: str | None = None, limit: in
 
 
 @app.get("/runs/{job_id}/risk.csv")
-def run_risk_csv(job_id: str, horizon: float = 3):
-    ds = _dataset(job_id)
+def run_risk_csv(job_id: str, horizon: float = 3, user: dict | None = Depends(optional_user)):
+    ds = _dataset(job_id, user)
     try:
         csv_text = risk_mod.risk_csv(ds, horizon=_horizon(horizon))
     except ValueError as e:
@@ -489,14 +529,14 @@ def run_risk_csv(job_id: str, horizon: float = 3):
 
 
 @app.get("/runs/{job_id}/whatif/levers")
-def run_whatif_levers(job_id: str):
-    return whatif_mod.levers(_dataset(job_id))
+def run_whatif_levers(job_id: str, user: dict | None = Depends(optional_user)):
+    return whatif_mod.levers(_dataset(job_id, user))
 
 
 @app.post("/runs/{job_id}/whatif")
-def run_whatif(job_id: str, body: Dict[str, Any] = Body(...)):
+def run_whatif(job_id: str, body: Dict[str, Any] = Body(...), user: dict | None = Depends(optional_user)):
     """Body: {"levers": [...], "horizon": 3}. See app/analytics/whatif.py."""
-    ds = _dataset(job_id)
+    ds = _dataset(job_id, user)
     levers = body.get("levers") or []
     if not isinstance(levers, list) or len(levers) > 10:
         raise HTTPException(status_code=400, detail="levers must be a list of up to 10 changes")
@@ -507,22 +547,22 @@ def run_whatif(job_id: str, body: Dict[str, Any] = Body(...)):
 
 
 @app.get("/compare")
-def compare(a: str, b: str):
+def compare(a: str, b: str, user: dict = Depends(require_user)):
     """Two runs side by side with BH-corrected drift tests."""
     if a == b:
         raise HTTPException(status_code=400, detail="Pick two different runs")
-    return compare_runs(_dataset(a), _dataset(b))
+    return compare_runs(_dataset(a, user), _dataset(b, user))
 
 
 @app.post("/runs/{job_id}/copilot")
-def run_copilot(job_id: str, body: Dict[str, Any] = Body(...)):
+def run_copilot(job_id: str, body: Dict[str, Any] = Body(...), user: dict = Depends(require_user)):
     """Streams the copilot's steps and answer as SSE (see app/copilot/agent.py)."""
     from app.copilot import ask_copilot
 
     question = str(body.get("question") or "").strip()
     if not question:
         raise HTTPException(status_code=400, detail="Ask a question")
-    ds = _dataset(job_id)
+    ds = _dataset(job_id, user)  # login required even for the demo: it spends LLM quota
     history = body.get("history") if isinstance(body.get("history"), list) else []
 
     def gen():
@@ -544,7 +584,8 @@ def run_copilot(job_id: str, body: Dict[str, Any] = Body(...)):
 
 
 @app.get("/runs/{job_id}")
-async def get_run(job_id: str):
+async def get_run(job_id: str, user: dict = Depends(require_user)):
+    _check_job(job_id, user)
     run = load_run(job_id)
     if run is None:
         live = active_streams.get(job_id)
@@ -555,7 +596,8 @@ async def get_run(job_id: str):
 
 
 @app.get("/analyze/stream/{job_id}")
-async def stream_job(job_id: str, request: Request):
+async def stream_job(job_id: str, request: Request, user: dict = Depends(require_user)):
+    _check_job(job_id, user)
     stream = active_streams.get(job_id)
     if stream is None:
         # Finished before this connection opened (or the backend restarted) —
@@ -610,12 +652,12 @@ async def stream_job(job_id: str, request: Request):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.post("/analyze/{job_id}/cancel")
-async def cancel_job(job_id: str):
+async def cancel_job(job_id: str, user: dict = Depends(require_user)):
     """Signal the running pipeline to stop. Wrapper in builder.py checks the
     `cancelled` flag before every node and raises `JobCancelled`; the worker
     catches that and pushes a `cancelled` SSE event then `complete`."""
     stream = active_streams.get(job_id)
-    if not stream:
+    if not stream or not _owner_ok(stream.get("owner"), user):
         raise HTTPException(status_code=404, detail="Job not found or already completed")
     stream["cancelled"] = True
     # Unblock any HITL wait so the cancellation can propagate immediately.
@@ -626,9 +668,9 @@ async def cancel_job(job_id: str):
     return {"status": "ok", "job_id": job_id, "cancelled": True}
 
 @app.post("/analyze/{job_id}/respond")
-async def submit_hitl_response(job_id: str, body: Dict[str, Any] = Body(...)):
+async def submit_hitl_response(job_id: str, body: Dict[str, Any] = Body(...), user: dict = Depends(require_user)):
     stream = active_streams.get(job_id)
-    if not stream:
+    if not stream or not _owner_ok(stream.get("owner"), user):
         raise HTTPException(status_code=404, detail="Job not found or already completed")
     stream["hitl_answers"] = body.get("answers", {})
     stream["hitl_event"].set()

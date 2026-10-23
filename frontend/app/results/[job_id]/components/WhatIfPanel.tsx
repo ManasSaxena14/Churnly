@@ -7,6 +7,7 @@ import { CountUp } from "@/components/motion";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { getLevers, runWhatIf, type Lever, type Levers, type WhatIfResult } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { celebrate } from "@/lib/celebrate";
 
 const SELECT = "h-9 rounded-lg border border-white/10 bg-ink px-2.5 text-[12.5px] text-zinc-100 outline-none focus:border-brand/50";
 
@@ -48,6 +49,7 @@ export function WhatIfPanel({ jobId }: { jobId: string }) {
     try {
       setResult(await runWhatIf(jobId, ls, horizon));
       setError(null);
+      celebrate("Scenario simulated", { description: `${ls.length} lever${ls.length === 1 ? "" : "s"} over ${horizon} days — results below.` });
     } catch (e) {
       setError((e as Error).message);
     } finally {
