@@ -62,7 +62,7 @@ export default function DashboardPage() {
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Dashboard</p>
             <SplitReveal as="h1" className="mt-2 font-display text-[34px] font-semibold tracking-[-0.035em] sm:text-[44px]">
-              All your <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">analyses</span> in one place
+              All your <span data-keep className="inline-block text-zinc-500">analyses</span> in one place
             </SplitReveal>
             <p className="mt-2 max-w-xl text-[14.5px] leading-[1.7] text-zinc-400">
               See every analysis you&apos;ve run — risk, causes and plans. Select two to compare them and see what changed.

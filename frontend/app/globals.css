@@ -160,30 +160,37 @@
    Churnly — landing + shared effects
    ═══════════════════════════════════════════════════ */
 
-/* Film grain over the whole page — subtle, keeps big dark areas from banding. */
-.grain::before {
+/* App backdrop (class kept as `.grain` so every page root picks it up):
+   a soft light from the top and a fine grid that fades out — calm, static,
+   and the same on every page. Sits behind content via isolation. */
+.grain { isolation: isolate; }
+.grain::before,
+.grain::after {
   content: "";
   position: fixed;
-  inset: -50%;
-  z-index: 60;
+  inset: 0;
+  z-index: -1;
   pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  /* static: an animated full-viewport layer repaints constantly for an
-     effect nobody notices moving */
 }
-@keyframes grain-shift {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-3%, 2%); }
-  40% { transform: translate(2%, -3%); }
-  60% { transform: translate(-2%, -1%); }
-  80% { transform: translate(3%, 3%); }
-  100% { transform: translate(0, 0); }
+.grain::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, #000 10%, transparent 75%);
+}
+.grain::after {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(129, 140, 248, 0.11), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 50% -5%, rgba(255, 255, 255, 0.05), transparent 70%),
+    linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.35));
 }
 
 /* Gradient text used for the accent words in headlines. */
 .text-brand-gradient {
-  background: linear-gradient(100deg, #99f6e4 0%, #5eead4 30%, #818cf8 65%, #e879f9 100%);
+  background: linear-gradient(100deg, #99f6e4 0%, #5eead4 40%, #a5b4fc 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -191,12 +198,12 @@
 
 /* Moving sheen across gradient text — the "AI" shimmer on hero accent words. */
 .text-shimmer {
-  background: linear-gradient(100deg, #5eead4 0%, #818cf8 25%, #e879f9 45%, #ffffff 50%, #e879f9 55%, #818cf8 75%, #5eead4 100%);
+  background: linear-gradient(100deg, #5eead4 0%, #a5b4fc 35%, #ffffff 50%, #a5b4fc 65%, #5eead4 100%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: shimmer-text 5s linear infinite;
+  animation: shimmer-text 9s linear infinite;
 }
 @keyframes shimmer-text {
   from { background-position: 100% 0; }
@@ -215,11 +222,11 @@
   padding: 1px;
   border-radius: inherit;
   pointer-events: none;
-  background: conic-gradient(from var(--cta-angle), transparent 0 55%, #5eead4 70%, #e879f9 80%, transparent 90%);
+  background: conic-gradient(from var(--cta-angle), transparent 0 60%, #5eead4 75%, #a5b4fc 82%, transparent 90%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: cta-spin 4.5s linear infinite;
+  animation: cta-spin 7s linear infinite;
 }
 
 /* Blinking caret for typed text. */
@@ -283,16 +290,18 @@
 .cta-ring::before {
   content: "";
   position: absolute;
-  inset: -2px;
-  padding: 2px;
+  inset: -1px;
+  padding: 1px;
   border-radius: inherit;
   pointer-events: none;
-  background: conic-gradient(from var(--cta-angle), #5eead4, #a78bfa, #5eead4 40%, transparent 60%, #5eead4);
+  background: conic-gradient(from var(--cta-angle), #5eead4, #a5b4fc, #5eead4 40%, rgba(255, 255, 255, 0.15) 60%, #5eead4);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: cta-spin 4s linear infinite;
+  animation: cta-spin 4s linear infinite paused;
 }
+.cta-ring:hover::before { animation-play-state: running; }
+.cta-ring:hover::after { opacity: 0.45; }
 .cta-ring::after {
   content: "";
   position: absolute;
@@ -300,9 +309,10 @@
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgba(94, 234, 212, 0.35), transparent);
+  background: radial-gradient(closest-side, rgba(94, 234, 212, 0.3), transparent);
   filter: blur(10px);
-  opacity: 0.6;
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
 }
 @keyframes cta-spin { to { --cta-angle: 360deg; } }
 
@@ -340,14 +350,11 @@
 }
 
 /* Route transition (app/template.tsx) */
-.route-curtain {
-  transform-origin: top;
-  animation: curtain-lift 0.42s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
-}
+.route-curtain { display: none; }
 .route-mark { animation: mark-bloom 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .route-glow { animation: glow-bloom 0.4s ease-out both; }
 .route-sweep { left: -40%; animation: sweep 0.45s cubic-bezier(0.65, 0, 0.35, 1) both; }
-.route-page { animation: page-in 0.35s ease-out 0.1s both; }
+.route-page { animation: page-in 0.28s ease-out both; }
 @keyframes curtain-lift {
   from { transform: translateY(0); }
   to { transform: translateY(-100%); visibility: hidden; }

@@ -159,7 +159,7 @@ export default function ComparePage() {
     <AppShell>
       <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Compare analyses</p>
       <SplitReveal as="h1" className="mt-2 font-display text-[34px] font-semibold tracking-[-0.035em] sm:text-[44px]">
-        What changed <span data-keep className="inline-block font-serif font-normal italic text-brand-gradient">between runs?</span>
+        What changed <span data-keep className="inline-block text-zinc-500">between runs?</span>
       </SplitReveal>
       <p className="mb-8 mt-2 max-w-2xl text-[14.5px] leading-[1.7] text-zinc-400">
         We compare every customer group between the two datasets and filter out changes that could be chance — so you only see what really moved.

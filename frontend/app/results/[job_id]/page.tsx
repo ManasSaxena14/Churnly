@@ -65,12 +65,6 @@ export default function ResultsPage() {
     () => {
       if (prefersReducedMotion()) return;
       gsap.from("[data-hdr]", { y: 18, opacity: 0, stagger: 0.07, duration: 0.9, ease: "expo.out" });
-      gsap.utils.toArray<HTMLElement>("[data-aurora]").forEach((el, i) => {
-        gsap.to(el, {
-          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15),
-          duration: gsap.utils.random(10, 16), ease: "sine.inOut", repeat: -1, yoyo: true, delay: i,
-        });
-      });
     },
     { scope: pageRef },
   );
@@ -206,12 +200,7 @@ export default function ResultsPage() {
   };
 
   return (
-    <div ref={pageRef} className='min-h-screen bg-ink text-[13px] leading-normal tracking-[-0.005em] text-zinc-50 antialiased [font-feature-settings:"cv11","ss01","ss03"]'>
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div data-aurora className="absolute right-[5%] top-[-25%] h-[55vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.07),transparent)] will-change-transform" />
-        <div data-aurora className="absolute bottom-[-25%] right-[-10%] h-[60vh] w-[45vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.08),transparent)] will-change-transform" />
-        <div data-aurora className="absolute bottom-[20%] left-[20%] h-[40vh] w-[30vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.04),transparent)] will-change-transform" />
-      </div>
+    <div ref={pageRef} className='grain min-h-screen bg-ink text-[13px] leading-normal tracking-[-0.005em] text-zinc-50 antialiased [font-feature-settings:"cv11","ss01","ss03"]'>
       <CompletionBurst complete={complete && !isDemo && finishedLive} />
       <div className="relative flex min-h-screen">
         <Sidebar
@@ -259,7 +248,7 @@ export default function ResultsPage() {
                   {isDemo ? "Cached demo run · replayed" : complete ? "Analysis complete" : "Live analysis"}
                 </p>
                 <h1 data-hdr className="mt-2 font-display text-[30px] font-semibold tracking-[-0.035em]">
-                  Retention <span className="font-serif font-normal italic text-brand-gradient">intelligence</span>
+                  Retention <span className="text-zinc-500">report</span>
                 </h1>
                 <div data-hdr className="mt-1.5 flex flex-wrap items-center gap-2.5 text-xs text-zinc-400">
                   <span className="tnum font-mono">job · {jobId?.split("-")[0]}</span>

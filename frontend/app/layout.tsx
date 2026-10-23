@@ -3,7 +3,6 @@ import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
-import { CursorGlow } from "@/components/motion";
 import { AuthProvider } from "@/lib/auth";
 import { RouteProgress } from "@/components/feedback/RouteProgress";
 import { TaskToasts } from "@/components/feedback/TaskToasts";
@@ -54,7 +53,6 @@ export default function RootLayout({
             error: { iconTheme: { primary: "#f87171", secondary: "#0f1115" } },
           }}
         />
-        <CursorGlow />
         <RouteProgress />
         <AuthProvider>{children}</AuthProvider>
         <TaskToasts />

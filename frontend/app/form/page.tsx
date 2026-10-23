@@ -234,19 +234,6 @@ export default function FormPage() {
     { scope: panelRef, dependencies: [step] },
   );
 
-  // Background light drifts slowly behind the form.
-  useGSAP(
-    () => {
-      if (prefersReducedMotion()) return;
-      gsap.utils.toArray<HTMLElement>("[data-aurora]").forEach((el, i) => {
-        gsap.to(el, {
-          xPercent: gsap.utils.random(-20, 20), yPercent: gsap.utils.random(-15, 15),
-          duration: gsap.utils.random(10, 15), ease: "sine.inOut", repeat: -1, yoyo: true, delay: i,
-        });
-      });
-    },
-    { scope: shellRef },
-  );
 
   useGSAP(
     () => {
@@ -604,12 +591,6 @@ export default function FormPage() {
   /* ── layout ──────────────────────────────────────────────────── */
   return (
     <div ref={shellRef} className="grain relative flex min-h-screen flex-1 flex-col bg-ink">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div data-aurora className="absolute right-[-10%] top-[-20%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.09),transparent)] will-change-transform" />
-        <div data-aurora className="absolute bottom-[-20%] left-[-10%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.1),transparent)] will-change-transform" />
-        <div data-aurora className="absolute bottom-[10%] right-[10%] h-[40vh] w-[35vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.06),transparent)] will-change-transform" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,#000,transparent_80%)]" />
-      </div>
       {launchStage && <LaunchOverlay stage={launchStage} />}
 
       {/* mobile progress bar */}

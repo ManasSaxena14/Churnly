@@ -93,9 +93,9 @@ export function Hero() {
     <section ref={root} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
       {/* light + grid */}
       <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
-        <div data-aurora className="absolute -left-[10%] top-[-20%] h-[70vh] w-[60vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.16),transparent)] will-change-transform" />
-        <div data-aurora className="absolute right-[-10%] top-[5%] h-[75vh] w-[55vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.2),transparent)] will-change-transform" />
-        <div data-aurora className="absolute bottom-[-25%] left-[30%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(232,121,249,0.12),transparent)] will-change-transform" />
+        <div data-aurora className="absolute -left-[10%] top-[-20%] h-[70vh] w-[60vw] rounded-full bg-[radial-gradient(closest-side,rgba(94,234,212,0.08),transparent)] will-change-transform" />
+        <div data-aurora className="absolute right-[-10%] top-[5%] h-[75vh] w-[55vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.11),transparent)] will-change-transform" />
+        <div data-aurora className="absolute bottom-[-25%] left-[30%] h-[60vh] w-[50vw] rounded-full bg-[radial-gradient(closest-side,rgba(129,140,248,0.05),transparent)] will-change-transform" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_70%_60%_at_60%_40%,#000_20%,transparent_75%)]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-2/60 to-transparent" />
       </div>
