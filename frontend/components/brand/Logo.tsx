@@ -1,53 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-/* Churnly mark: a ring (your customer base) shaped like a "C", with the gap
-   where customers churn out. The glowing dot sits in that gap and closes the
-   loop: the customer you kept. The inner core is the product they orbit.
-   Geometry: r=11 arc from 5° to 295° (gap centred at -30°), dot at -30°. */
-export function LogoMark({ className, animated = false }: { className?: string; animated?: boolean }) {
-  const id = useId().replace(/:/g, "");
+/* Churnly mark — the magnet C. A horseshoe magnet bent into a "C" whose
+   teal poles pull leaving customers back in. 32-unit grid: arc centre
+   (16,16) r 8, stroke 5, opening ±45° around 0°; the outer 20° at each end
+   are the poles. Butt caps keep the poles square, like a real magnet. */
+export const MARK = {
+  body: "M23.25 12.62A8 8 0 1 0 23.25 19.38",
+  poles: "M21.66 10.34A8 8 0 0 1 23.25 12.62M23.25 19.38A8 8 0 0 1 21.66 21.66",
+  stroke: 5,
+};
+
+export function LogoMark({ className, mono = false }: { className?: string; mono?: boolean }) {
+  const glyph = mono ? "#09090b" : "#fafafa";
   return (
-    <svg viewBox="0 0 32 32" className={cn("h-7 w-7", className)} aria-hidden="true">
-      <defs>
-        <linearGradient id={`ch-ring-${id}`} x1="0.1" y1="0.9" x2="0.9" y2="0.1">
-          <stop offset="0%" stopColor="#5eead4" />
-          <stop offset="55%" stopColor="#818cf8" />
-          <stop offset="100%" stopColor="#e879f9" />
-        </linearGradient>
-        <radialGradient id={`ch-glow-${id}`}>
-          <stop offset="0%" stopColor="#f5d0fe" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <path d="M26.96 16.96 A11 11 0 1 1 20.65 6.03" fill="none" stroke={`url(#ch-ring-${id})`} strokeWidth="3.4" strokeLinecap="round" />
-      <circle cx="16" cy="16" r="3.4" fill={`url(#ch-ring-${id})`} opacity="0.9" />
-      <g className={animated ? "origin-[16px_16px] animate-[logo-dot_3.2s_ease-in-out_infinite]" : undefined}>
-        <circle cx="25.53" cy="10.5" r="5" fill={`url(#ch-glow-${id})`} />
-        <circle cx="25.53" cy="10.5" r="2.6" fill="#fdf4ff" />
-      </g>
+    <svg viewBox="0 0 32 32" className={cn("h-7 w-7 flex-shrink-0", className)} aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill={mono ? "#fafafa" : "#14161c"} />
+      {!mono && <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="none" stroke="#fff" strokeOpacity="0.1" />}
+      <path d={MARK.body} fill="none" stroke={glyph} strokeWidth={MARK.stroke} />
+      <path d={MARK.poles} fill="none" stroke={mono ? glyph : "#2dd4bf"} strokeWidth={MARK.stroke} />
     </svg>
   );
 }
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn("font-display font-semibold tracking-[-0.035em] text-zinc-50", className)}>
-      {BRAND.wordmark[0]}
-      <span className="text-brand-gradient">{BRAND.wordmark[1]}</span>
+    <span className={cn("font-display font-semibold tracking-[-0.03em] text-zinc-50", className)}>
+      {BRAND.name}
     </span>
   );
 }
 
-export function Logo({ href = "/", className, compact, animated = true }: { href?: string; className?: string; compact?: boolean; animated?: boolean }) {
+export function Logo({ href = "/", className, compact }: { href?: string; className?: string; compact?: boolean }) {
   return (
-    <Link href={href} className={cn("group inline-flex items-center gap-2", className)} aria-label={`${BRAND.name} home`}>
-      <LogoMark animated={animated} className="transition-transform duration-700 ease-out group-hover:rotate-[-24deg] group-hover:scale-110" />
-      {!compact && <Wordmark className="text-[18px]" />}
+    <Link href={href} className={cn("group inline-flex items-center gap-2.5", className)} aria-label={`${BRAND.name} home`}>
+      <LogoMark className="transition-transform duration-300 group-hover:scale-105" />
+      {!compact && <Wordmark className="text-[17.5px]" />}
     </Link>
   );
 }

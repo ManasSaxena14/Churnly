@@ -1,5 +1,10 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="frontend/public/brand/churnly-logo-dark.svg">
+  <img alt="Churnly" src="frontend/public/brand/churnly-logo-light.svg" height="56">
+</picture>
+
 # Churnly
 
 **The AI analyst that proves why customers churn.**

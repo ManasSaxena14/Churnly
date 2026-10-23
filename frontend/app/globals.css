@@ -428,14 +428,6 @@
   .sv-scan, .sv-travel, .sv-typing { display: none; }
 }
 
-/* Logo: the kept customer drifts out of the gap and snaps back in. */
-@keyframes logo-dot {
-  0%, 60%, 100% { transform: translate(0, 0); }
-  30% { transform: translate(2.2px, -2.2px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  [class*="logo-dot"] { animation: none !important; }
-}
 
 /* Task-completed toast (components/feedback/TaskToasts.tsx) */
 .task-check {
