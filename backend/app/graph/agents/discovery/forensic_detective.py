@@ -159,7 +159,7 @@ def _derive_signals(stats: dict, behavior_curves: dict) -> List[str]:
 
     tenure_buckets = stats.get("churn_rate_by_tenure_bucket", {}) or {}
     early_bucket = tenure_buckets.get("0_1mo", {})
-    if isinstance(early_bucket, dict) and early_bucket.get("churn_rate", 0) > 0.15:
+    if isinstance(early_bucket, dict) and early_bucket.get("significant") and (early_bucket.get("rate_ratio") or 0) >= 1.5:
         signals.extend(["30_day_cliff", "onboarding_friction"])
 
     median = behavior_curves.get("median_survival_time")
@@ -291,7 +291,7 @@ Churn by Plan Tier: {churn_by_plan_tier}
 Churn by Contract Cadence: {churn_by_contract}
 Churn by Support Ticket Volume: {churn_by_support_volume}
 Churn by Usage Decile: {churn_by_usage_decile}
-Churn Rate by Tenure Bucket: {churn_rate_by_tenure_bucket}
+Monthly Churn Rate by Tenure Period (among customers still active in that period; rate_ratio = vs all other periods): {churn_rate_by_tenure_bucket}
 Time-to-Churn Distribution: {time_to_churn_distribution}
 Detected Signals: {signals}
 

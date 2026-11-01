@@ -66,11 +66,24 @@ def apply_significance(
 
     raw: list[float | None] = []
     for _, _, payload in targets:
+        if "_p" in payload:  # bucket computed its own (better-suited) test
+            raw.append(payload.pop("_p"))
+            continue
         n1 = int(payload["size"])
         x1 = int(payload["churned"])
         raw.append(two_proportion_pvalue(x1, n1, total_churned - x1, total_n - n1))
 
-    adjusted = benjamini_hochberg(raw)
+    # Correct segment tests and tenure tests as separate families. Tenure
+    # buckets are almost always "significant" for a mechanical reason
+    # (customers who churned were, by definition, observed for less time);
+    # pooling those near-certain rejections with the segment tests loosens
+    # BH's threshold and lets noise segments through.
+    adjusted: list[float | None] = [None] * len(targets)
+    for group in ({i for i, t in enumerate(targets) if t[0] in _SEPARATE_FAMILIES},
+                  {i for i, t in enumerate(targets) if t[0] not in _SEPARATE_FAMILIES}):
+        idx = sorted(group)
+        for i, q in zip(idx, benjamini_hochberg([raw[i] for i in idx])):
+            adjusted[i] = q
 
     n_raw_sig = n_adj_sig = 0
     for (bucket_name, label, payload), p, q in zip(targets, raw, adjusted):
@@ -98,6 +111,10 @@ def apply_significance(
         "significant_after_correction": n_adj_sig,
         "removed_by_correction": max(0, n_raw_sig - n_adj_sig) if mode == "bh" else 0,
     }
+
+
+# Buckets corrected as their own family (see apply_significance).
+_SEPARATE_FAMILIES = frozenset({"churn_rate_by_tenure_bucket"})
 
 
 # Bucket key → family prefix used in stat ids. Matches the families

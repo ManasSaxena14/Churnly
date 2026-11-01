@@ -40,6 +40,51 @@ def _bucket_churn(df, col, churn_col, buckets):
     return out
 
 
+def _tenure_hazard_buckets(df, tenure_col: str, churn_col: str, buckets) -> dict:
+    """Churn by tenure period, measured the survival-analysis way.
+
+    A naive "share churned among customers whose tenure is 0-1 month" is
+    biased upward for early periods: that group is everyone who churned early
+    plus anyone who just signed up, so it shows a "first-month cliff" even
+    when risk is flat. Instead, for each period we count churn events and the
+    customer-months actually spent in it by everyone still active, giving the
+    monthly churn rate among customers who reached that period. Significance
+    is an exact test of that rate against the rate in all other periods.
+    """
+    from scipy.stats import binomtest
+
+    data = df[[tenure_col, churn_col]].dropna()
+    t = data[tenure_col].astype(float).clip(lower=0).to_numpy()
+    e = data[churn_col].astype(int).to_numpy()
+    total_events, total_exposure = int(e.sum()), float(t.sum())
+    if total_events == 0 or total_exposure <= 0:
+        return {}
+    overall_rate = total_events / total_exposure
+    out = {}
+    for label, lo, hi in buckets:
+        top = np.inf if hi is None else hi
+        exposure = float((np.minimum(t, top) - lo).clip(min=0).sum())
+        at_risk = int((t >= lo).sum())
+        events = int(((t >= lo) & (t < top) & (e == 1)).sum())
+        if at_risk == 0 or exposure <= 0:
+            continue
+        rest_events, rest_exposure = total_events - events, total_exposure - exposure
+        p = None
+        if rest_exposure > 0:
+            p = float(binomtest(events, total_events, exposure / total_exposure).pvalue)
+        rate = events / exposure
+        out[label] = {
+            "churn_rate": round(float(1 - np.exp(-rate)), 4),
+            "metric": "monthly churn rate among customers active in this period",
+            "rate_ratio": round(rate / overall_rate, 3),
+            "size": at_risk,
+            "churned": events,
+            "exposure_months": round(exposure, 1),
+            "_p": p,
+        }
+    return out
+
+
 def _categorical_bucket(df, col: str, churn_col: str) -> dict:
     out = {}
     for value in df[col].dropna().unique():
@@ -155,8 +200,8 @@ def compute_bucket_stats(df, churn_col: str | None, detected: dict[str, Any]) ->
                     "churned_count": int(len(churned_tenures)),
                 }
 
-            # Churn rate by tenure bucket — surfaces 30/90-day cliffs
-            stats["churn_rate_by_tenure_bucket"] = _bucket_churn(
+            # Churn rate by tenure period — surfaces real 30/90-day cliffs
+            stats["churn_rate_by_tenure_bucket"] = _tenure_hazard_buckets(
                 df, tenure_col, churn_col,
                 [
                     ("0_1mo", 0, 1),

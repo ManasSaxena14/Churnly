@@ -40,6 +40,9 @@ export function RationaleChainStrip({ chain }: { chain: RationaleChain }) {
               {sz != null && <>{sz.toLocaleString()} users</>}
             </Meta>
           )}
+          {chain.stat.hazard_ratio != null && (
+            <Meta className="tnum">{chain.stat.hazard_ratio.toFixed(2)}× churn risk per unit</Meta>
+          )}
         </>
       ),
     });

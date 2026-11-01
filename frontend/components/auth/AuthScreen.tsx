@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowLeft, ArrowRight, BadgeCheck, Bot, Check, Eye, EyeOff, KeyRound, Loader2, Lock, Mail, Play, Sigma, User, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { NeuralScene } from "@/components/three/NeuralScene";
+import { NeuralScene } from "@/components/three/lazy";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { AuthError, safeNext, useAuth } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";

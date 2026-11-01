@@ -21,7 +21,7 @@ function tokens(s: string | undefined, minLen = 5): Set<string> {
 function bestStatForHypothesis(
   hypText: string,
   forensic: ForensicFindingsRich | undefined,
-): { stat_id: string; source: string; label: string; churn_rate: number; size: number } | null {
+): { stat_id: string; source: string; label: string; churn_rate: number; size: number; churned?: number } | null {
   if (!forensic?.statistical_evidence) return null;
   const stats = forensic.statistical_evidence;
   const hypKw = tokens(hypText);
@@ -33,7 +33,7 @@ function bestStatForHypothesis(
     ["churn_by_usage_decile", stats.churn_by_usage_decile],
     ["churn_rate_by_tenure_bucket", stats.churn_rate_by_tenure_bucket],
   ];
-  let best: { stat_id: string; source: string; label: string; churn_rate: number; size: number; score: number } | null = null;
+  let best: { stat_id: string; source: string; label: string; churn_rate: number; size: number; churned?: number; score: number } | null = null;
   for (const [name, bucket] of buckets) {
     if (!bucket) continue;
     for (const [label, payload] of Object.entries(bucket)) {
@@ -43,7 +43,7 @@ function bestStatForHypothesis(
       labelKw.forEach((t) => { if (hypKw.has(t)) overlap += 1; });
       const score = overlap * 1000 + payload.churn_rate * payload.size;
       if (!best || score > best.score) {
-        best = { stat_id: `${name}::${label}`, source: name, label, churn_rate: payload.churn_rate, size: payload.size, score };
+        best = { stat_id: `${name}::${label}`, source: name, label, churn_rate: payload.churn_rate, size: payload.size, churned: payload.churned, score };
       }
     }
   }
@@ -207,7 +207,7 @@ export function EvidenceDrawer({
                 <div className="tnum mb-3 inline-block rounded border border-amber-500/25 bg-amber-500/8 px-2 py-1 text-[11px] text-zinc-50">{stat.stat_id}</div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
-                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Churn rate</div>
+                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{stat.source === "churn_rate_by_tenure_bucket" ? "Monthly churn rate" : "Churn rate"}</div>
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-amber-500">{(stat.churn_rate * 100).toFixed(1)}%</div>
                   </div>
                   <div>
@@ -215,8 +215,8 @@ export function EvidenceDrawer({
                     <div className="tnum text-lg font-bold tracking-[-0.02em] text-zinc-50">{stat.size.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Customers lost (est.)</div>
-                    <div className="tnum text-lg font-bold tracking-[-0.02em] text-red-500">≈ {Math.round(stat.churn_rate * stat.size).toLocaleString()}</div>
+                    <div className="mb-[5px] text-[9.5px] font-semibold uppercase tracking-[0.12em] text-zinc-500">{typeof stat.churned === "number" ? "Customers lost" : "Customers lost (est.)"}</div>
+                    <div className="tnum text-lg font-bold tracking-[-0.02em] text-red-500">{typeof stat.churned === "number" ? stat.churned.toLocaleString() : `≈ ${Math.round(stat.churn_rate * stat.size).toLocaleString()}`}</div>
                   </div>
                 </div>
                 {matchedSegment && (

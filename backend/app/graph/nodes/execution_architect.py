@@ -237,7 +237,7 @@ For EACH problem identified:
 Field guidance:
 - estimated_timeline: "30/60/90 days" style. estimated_budget: dollar range string.
 - confidence_level: "High" / "Medium" / "Low".
-- problems_and_solutions: 2–4 distinct problems (priority 1..N).
+- problems_and_solutions: 2–4 distinct problems (priority 1..N), each built on a verified root cause above. If the verified root causes list is EMPTY, no cause survived statistical testing: return an EMPTY problems_and_solutions list, say plainly in the executive summary that no segment or factor shows a statistically reliable difference in churn, and make the roadmap about measurement (more data, more columns, re-running the analysis) and low-risk general retention practices — never invent a segment-specific problem.
 - solution.framework_used: "Unit Economics" / "JTBD" / "Growth Hacking" / mix.
 - retention_impact.confidence in [0, 1]. estimated_lift_percent is numeric (e.g. 5.0, not "5%").
 - implementation_steps.effort: "low" / "medium" / "high". timeline: "Week 1–2" style.
@@ -388,6 +388,20 @@ Output: continuous prose. Max ~450 words. Be specific. No fluff."""
         )
 
         playbook = response.model_dump(by_alias=True)
+
+        # ── Evidence rule, enforced in code ──────────────────────────────
+        # Problems must rest on causes that passed the evidence gate. With
+        # none, any "problem" the model wrote is unsupported, so drop it and
+        # say so instead of presenting a guess as a finding.
+        if not verified_root_causes:
+            playbook["problems_and_solutions"] = []
+            playbook["evidence_status"] = "no_reliable_driver"
+            summary = playbook.get("executive_summary") or {}
+            summary["total_problems_identified"] = 0
+            summary["total_projected_retention_lift"] = "Not estimated"
+            playbook["executive_summary"] = summary
+        else:
+            playbook["evidence_status"] = "verified"
 
         # ── De-duplicate overlapping problems ────────────────────────────
         problems = playbook.get("problems_and_solutions", [])

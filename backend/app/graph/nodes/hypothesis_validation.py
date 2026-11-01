@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from app.graph.state import RetentionGraphState
 from app.rag.store import valid_citations
+from app.stats.evidence import cause_evidence
 
 
 def hypothesis_validation_node(state: RetentionGraphState) -> dict:
@@ -20,15 +21,31 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
         skeptic_findings = state.get("professional_skeptic_output", {})
 
         verified_root_causes = []
+        rejected_causes = []
         hypothesis_status = "unverified"
 
         # Validate each hypothesis against skeptic's robustness scores
         robustness_scores = skeptic_findings.get("robustness_scores", {})
 
+        # Evidence gate: a cause must point at a statistic that survived
+        # correction (or a significant CoxPH driver). Skipped only when no
+        # statistics exist at all, since then there is nothing to check against.
+        stats = (state.get("forensic_detective_output") or {}).get("statistical_evidence") or {}
+        drivers = ((state.get("feature_store") or {}).get("predictive_churn_risk") or {}).get("driver_features") or []
+        gate = bool(stats.get("significance_summary"))
+
         for hypothesis in merged_hypotheses:
             cause = hypothesis.get("hypothesis", "")
             confidence = hypothesis.get("confidence", 0)
             robustness = robustness_scores.get(cause, 0.5)
+            evidence = cause_evidence(cause, stats, drivers) if gate else None
+            if evidence is not None and not evidence["supported"]:
+                rejected_causes.append({
+                    "cause": cause,
+                    "reason": "No statistically significant evidence for this in your data.",
+                    "families": evidence["families"],
+                })
+                continue
             # Keep the knowledge-base sources behind each cause: the evidence
             # dossier and groundedness check read them from here.
             provenance = {
@@ -45,7 +62,9 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "confidence": round(confidence, 3),
                     "robustness": round(robustness, 3),
                     "evidence": "Statistical validation passed",
-                    "p_value": round(1 - confidence, 3),
+                    "p_value": evidence["best_p_adj"] if evidence else None,
+                    "evidence_stats": evidence["stat_ids"] if evidence else [],
+                    "evidence_drivers": evidence["drivers"] if evidence else [],
                     "recommendation": "Proceed to constraint-aware strategy design",
                     **provenance,
                 })
@@ -56,7 +75,9 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "confidence": round(confidence, 3),
                     "robustness": round(robustness, 3),
                     "evidence": "Weak statistical support",
-                    "p_value": round(1 - confidence, 3),
+                    "p_value": evidence["best_p_adj"] if evidence else None,
+                    "evidence_stats": evidence["stat_ids"] if evidence else [],
+                    "evidence_drivers": evidence["drivers"] if evidence else [],
                     "recommendation": "Require additional discovery iterations",
                     **provenance,
                 })
@@ -72,6 +93,7 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
             "verified_root_causes": verified_root_causes,
             "validation_metrics": {
                 "hypotheses_tested": len(merged_hypotheses),
+                "rejected_causes": rejected_causes,
                 "hypotheses_verified": len([
                     h for h in verified_root_causes
                     if h.get("evidence") == "Statistical validation passed"

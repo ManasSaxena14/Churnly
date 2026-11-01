@@ -31,12 +31,16 @@ def _keywords(text: str, min_len: int = 5) -> list[str]:
     return [t for t in tokens if len(t) >= min_len and t not in _KEYWORD_STOPWORDS]
 
 
-def _best_stat_for_cause(cause_text: str, stats: dict) -> dict | None:
+def _best_stat_for_cause(cause_text: str, stats: dict, allowed: list[str] | None = None) -> dict | None:
     """Find the highest-impact (churn_rate × size) stat bucket whose label/key
     keywords overlap the cause text. Returns {stat_id, source, churn_rate, size}.
+
+    `allowed` = the significant stat ids the evidence gate tied to this cause;
+    when given, only those can be the receipt (no keyword guesswork).
     """
     if not stats:
         return None
+    allowed_set = set(allowed or [])
     cause_kw = set(_keywords(cause_text))
     candidates: list[tuple[float, dict]] = []
 
@@ -57,6 +61,9 @@ def _best_stat_for_cause(cause_text: str, stats: dict) -> dict | None:
             size = payload.get("size", 0) or 0
             if churn is None or size < 1:
                 continue
+            stat_id = payload.get("stat_id") or f"{bucket_name}::{label}"
+            if allowed_set and stat_id not in allowed_set:
+                continue
             label_kw = set(_keywords(f"{bucket_name} {label}"))
             overlap = len(cause_kw & label_kw)
             impact = float(churn) * float(size)
@@ -65,7 +72,7 @@ def _best_stat_for_cause(cause_text: str, stats: dict) -> dict | None:
             # BH correction beats one that didn't (a receipt has to be real).
             score = overlap * 1000 + (500 if significant and overlap else 0) + impact
             candidates.append((score, {
-                "stat_id": payload.get("stat_id") or f"{bucket_name}::{label}",
+                "stat_id": stat_id,
                 "source": bucket_name,
                 "churn_rate": round(float(churn), 3),
                 "size": int(size),
@@ -79,6 +86,24 @@ def _best_stat_for_cause(cause_text: str, stats: dict) -> dict | None:
         return None
     candidates.sort(key=lambda kv: -kv[0])
     return candidates[0][1]
+
+
+def _driver_stat(feature: str, drivers: list[dict]) -> dict | None:
+    """A significant CoxPH driver as the statistical receipt for a cause."""
+    d = next((d for d in drivers if str(d.get("feature")) == feature), None)
+    if not d:
+        return None
+    return {
+        "stat_id": f"driver::{feature}",
+        "source": "cox_driver",
+        "churn_rate": None,
+        "size": None,
+        "label": f"{feature} (hazard ratio {d.get('hazard_ratio')})",
+        "hazard_ratio": d.get("hazard_ratio"),
+        "p_value": d.get("p_value"),
+        "p_adj": d.get("p_adj"),
+        "significant": bool(d.get("significant")),
+    }
 
 
 def _best_match_for_tactic(tactic_text: str, items: list[dict], text_key: str) -> dict | None:
@@ -107,10 +132,15 @@ def _build_dossier_row(
     skeptic_assumptions: list[dict],
     critic_weaknesses: list[str],
     critic_recommendations: list[str],
+    drivers: list[dict] | None = None,
 ) -> dict:
     cause_text = cause.get("cause") if isinstance(cause, dict) else str(cause)
+    evidence_stats = cause.get("evidence_stats") if isinstance(cause, dict) else None
+    evidence_drivers = cause.get("evidence_drivers") if isinstance(cause, dict) else None
 
-    stat = _best_stat_for_cause(cause_text, stats)
+    stat = _best_stat_for_cause(cause_text, stats, evidence_stats)
+    if (not stat or not stat.get("significant")) and evidence_drivers:
+        stat = _driver_stat(evidence_drivers[0], drivers or []) or stat
     tactic_text = (
         tactic.get("recommendation")
         or tactic.get("name")
@@ -202,6 +232,7 @@ def evidence_dossier_node(state: RetentionGraphState) -> dict:
         )
         forensic_output = state.get("forensic_detective_output", {}) or {}
         stats = forensic_output.get("statistical_evidence", {}) or {}
+        drivers = ((state.get("feature_store") or {}).get("predictive_churn_risk") or {}).get("driver_features") or []
         simulations = state.get("simulations", {}) or {}
         intervention_impacts = simulations.get("intervention_impacts", []) or []
         skeptic_output = state.get("strategy_skeptic_output", {}) or {}
@@ -230,6 +261,7 @@ def evidence_dossier_node(state: RetentionGraphState) -> dict:
                 skeptic_assumptions=skeptic_assumptions,
                 critic_weaknesses=critic_weaknesses,
                 critic_recommendations=critic_recommendations,
+                drivers=drivers,
             ))
 
         return {

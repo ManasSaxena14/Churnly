@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Play } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { RetentionOrbit } from "@/components/three/RetentionOrbit";
+import { RetentionOrbit } from "@/components/three/lazy";
+import { LazyMount } from "@/components/three/LazyMount";
 import { BRAND } from "@/lib/brand";
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { useStartDemo } from "@/lib/useStartDemo";
@@ -161,7 +162,9 @@ export function FinalCTA() {
   return (
     <section ref={root} className="relative isolate overflow-hidden px-4 py-36 sm:px-8">
       {/* customers in orbit — churners drift out, the playbook pulls them back */}
-      <RetentionOrbit retainRef={retainRef} className="absolute inset-0 -z-10 opacity-70" />
+      <LazyMount when="idle" delay={1500} className="absolute inset-0 -z-10">
+        <RetentionOrbit retainRef={retainRef} className="absolute inset-0 opacity-70" />
+      </LazyMount>
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_50%_45%_at_50%_50%,rgba(7,8,11,0.85),rgba(7,8,11,0.4)_60%,transparent)]" />
       <div className="relative mx-auto max-w-4xl text-center">
         <h2 data-cta="reveal" className="font-display text-[40px] font-semibold leading-[1.02] tracking-[-0.045em] text-zinc-50 sm:text-[64px]">

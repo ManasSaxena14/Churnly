@@ -77,6 +77,15 @@ export function StrategySection({
 
       {groundedness && <GroundednessStrip report={groundedness} />}
 
+      {data.evidence_status === "no_reliable_driver" && (
+        <div className="mb-3.5 rounded-[10px] border border-amber-400/25 bg-amber-400/[0.06] px-4 py-3.5 text-[12.5px] leading-[1.6] text-zinc-300">
+          <div className="mb-1 font-semibold text-amber-300">No statistically reliable churn driver in this data</div>
+          None of the segments or factors in your file churn differently enough to rule out chance, so this plan doesn&apos;t
+          single out a cause. Its steps focus on measuring better and on low-risk retention basics. Adding more history or
+          more columns (usage, support, billing) usually reveals real drivers.
+        </div>
+      )}
+
       <div className="mb-3.5">
         {(data.problems_and_solutions ?? []).map((p, i) => <ProblemCard key={i} p={p} ctx={ctx} defaultOpen={i === 0} />)}
       </div>

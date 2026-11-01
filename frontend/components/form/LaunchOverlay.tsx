@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { Check, Loader2 } from "lucide-react";
-import { NeuralScene } from "@/components/three/NeuralScene";
+import { NeuralScene } from "@/components/three/lazy";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";

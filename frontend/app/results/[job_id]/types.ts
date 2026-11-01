@@ -46,6 +46,7 @@ export interface StatBucketEntry {
   churn_rate: number; size: number;
   churned?: number; p_value?: number | null; p_adj?: number | null; significant?: boolean;
   significant_raw?: boolean; stat_id?: string;
+  metric?: string; rate_ratio?: number; exposure_months?: number;
 }
 export type StatBuckets = Record<string, Record<string, StatBucketEntry>>;
 export interface ForensicFindingsRich {
@@ -150,6 +151,7 @@ export interface SimulationData {
 export interface ImplStep { step: number; action: string; owner: string; effort?: string; timeline: string; deliverable?: string; dependencies?: string[]; }
 export interface RationaleChainStat {
   stat_id?: string; source?: string; churn_rate?: number | null; size?: number | null; label?: string;
+  hazard_ratio?: number | null;
   p_value?: number | null; p_adj?: number | null; significant?: boolean;
 }
 export interface RationaleChainCause { text?: string; confidence?: number | null; citations?: string[]; }
@@ -190,6 +192,8 @@ export interface Playbook {
   title: string; created_date?: string; company?: string;
   executive_summary: { total_problems_identified: number; total_projected_retention_lift: string; estimated_timeline: string; estimated_budget: string; confidence_level: string; };
   problems_and_solutions: ProblemSolution[];
+  /** "no_reliable_driver" when no root cause passed statistical testing. */
+  evidence_status?: "verified" | "no_reliable_driver";
   "30_60_90_roadmap": { phase_1_30_days: PhaseSummary; phase_2_60_days: PhaseSummary; phase_3_90_days: PhaseSummary; };
   success_metrics?: SuccessMetric[];
   risks_and_mitigations?: PlaybookRisk[];

@@ -51,15 +51,9 @@ from evals.synth_data import (  # noqa: E402
 RESULTS_DIR = BACKEND_ROOT / "evals" / "results"
 EVALUATED_FAMILIES = PLANTABLE + NOISE_FAMILIES
 
-# Keywords used to decide which family an LLM-written root cause is about.
-FAMILY_KEYWORDS = {
-    "contract": ("contract", "month-to-month", "monthly contract", "monthly plan", "commitment", "cadence", "annual"),
-    "support": ("support", "ticket", "friction", "help desk", "complaint"),
-    "usage": ("usage", "login", "engagement", "inactive", "activity", "low use", "dormant"),
-    "plan_tier": ("plan tier", "tier", "premium", "basic plan", "standard plan", "pricing"),
-    "channel": ("channel", "acquisition", "paid ads", "organic", "referral", "outbound", "partner"),
-    "tenure": ("tenure", "onboarding", "first 30", "first 90", "early-life", "new customer", "month 1"),
-}
+# Keywords used to decide which family an LLM-written root cause is about —
+# shared with the app's evidence gate (app/stats/evidence.py).
+from app.stats.evidence import FAMILY_KEYWORDS  # noqa: E402
 
 
 @contextlib.contextmanager
@@ -246,6 +240,9 @@ def score_full(spec: DatasetSpec, final: dict[str, Any], metrics: dict[str, Any]
     found = set().union(*[f for f, _ in cause_families]) if cause_families else set()
     planted = set(spec.planted)
     unsupported = [c for fams, c in cause_families if not (fams & sig_families)]
+    # What the user actually sees: causes after the app's evidence gate.
+    final_causes = [c.get("cause", "") for c in final.get("verified_root_causes") or [] if isinstance(c, dict)]
+    final_unsupported = [c for c in final_causes if not (_families_in(c) & sig_families)]
     ground = groundedness_report(final.get("final_playbook") or {})
     return {
         "dataset": spec.name,
@@ -255,6 +252,8 @@ def score_full(spec: DatasetSpec, final: dict[str, Any], metrics: dict[str, Any]
         "noise_cause_mentions": sorted(found & set(NOISE_FAMILIES)),
         "unsupported_causes": unsupported,
         "unsupported_rate": round(len(unsupported) / len(causes), 3) if causes else None,
+        "final_causes": final_causes,
+        "final_unsupported_rate": round(len(final_unsupported) / len(final_causes), 3) if final_causes else 0.0,
         "groundedness": {k: v for k, v in ground.items() if k != "rows"},
         "seconds": round(seconds, 1),
         "metrics": {k: metrics.get(k) for k in (
@@ -291,7 +290,7 @@ def run_full_mode(specs: list[DatasetSpec], data_dir: pathlib.Path, ablate: bool
                 rows.append(score_full(spec, final, obs.snapshot(job_id), time.time() - t0))
                 obs.drop(job_id)
                 print(f"[full:{name}] {spec.name}: recall={rows[-1]['cause_recall']} "
-                      f"unsupported={rows[-1]['unsupported_rate']} "
+                      f"unsupported={rows[-1]['unsupported_rate']} final_unsupported={rows[-1]['final_unsupported_rate']} "
                       f"grounded={rows[-1]['groundedness'].get('grounded_rate')}", flush=True)
         secs = sorted(r["seconds"] for r in rows)
         out[name] = {
@@ -299,6 +298,7 @@ def run_full_mode(specs: list[DatasetSpec], data_dir: pathlib.Path, ablate: bool
                 "runs": len(rows),
                 "cause_recall": _mean([r["cause_recall"] for r in rows]),
                 "unsupported_cause_rate": _mean([r["unsupported_rate"] for r in rows]),
+                "final_unsupported_cause_rate": _mean([r["final_unsupported_rate"] for r in rows]),
                 "grounded_rate": _mean([r["groundedness"].get("grounded_rate") for r in rows]),
                 "p50_seconds": secs[len(secs) // 2] if secs else None,
                 "p95_seconds": secs[min(len(secs) - 1, int(round(0.95 * (len(secs) - 1))))] if secs else None,
@@ -340,7 +340,8 @@ def markdown_report(mode: str, results: dict[str, Any], meta: dict[str, Any]) ->
         lines += ["| Metric | " + " | ".join(cols) + " |", "|---" * (len(cols) + 1) + "|"]
         for key, label in (
             ("cause_recall", "Root-cause recall"),
-            ("unsupported_cause_rate", "Unsupported-cause rate"),
+            ("unsupported_cause_rate", "Unsupported-cause rate (raw LLM)"),
+            ("final_unsupported_cause_rate", "Unsupported-cause rate (shown to user)"),
             ("grounded_rate", "Playbook groundedness"),
             ("p50_seconds", "p50 run time (s)"),
             ("p95_seconds", "p95 run time (s)"),

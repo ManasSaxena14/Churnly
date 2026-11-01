@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { Play } from "lucide-react";
-import { NeuralScene } from "@/components/three/NeuralScene";
+import { NeuralScene } from "@/components/three/lazy";
+import { LazyMount } from "@/components/three/LazyMount";
 import { gsap, ScrollTrigger, SplitText, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { BRAND } from "@/lib/brand";
 import { EVAL_RESULTS } from "@/lib/evalResults";
@@ -102,7 +103,9 @@ export function Hero() {
 
       {/* the network */}
       <div data-hero="scene" className="absolute inset-0 -z-10 lg:left-[30%]">
-        <NeuralScene progressRef={progress} className="h-full w-full" />
+        <LazyMount when="idle" className="h-full w-full">
+          <NeuralScene progressRef={progress} className="h-full w-full" />
+        </LazyMount>
       </div>
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_70%_at_18%_50%,rgba(7,8,11,0.9)_0%,rgba(7,8,11,0.5)_50%,transparent_80%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-b from-transparent to-ink" />

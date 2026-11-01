@@ -25,6 +25,10 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=UserWarning, module="lifelines")
 
 
+COX_PENALIZER = 0.01
+COX_FALLBACK_PENALIZER = 0.1
+
+
 @dataclass
 class CoxModel:
     cph: Any                      # fitted lifelines.CoxPHFitter
@@ -95,8 +99,14 @@ def fit_cox(df: pd.DataFrame, churn_col: str, tenure_col: str, id_col: str | Non
     if not features or len(frame) <= 10 or frame[churn_col].nunique() < 2:
         return None
     frame = frame.astype({churn_col: int})
-    cph = CoxPHFitter(penalizer=0.1)  # small penalizer for convergence stability
-    cph.fit(frame, duration_col=tenure_col, event_col=churn_col)
+    # A light ridge penalty keeps the fit stable without biasing it: on
+    # planted-truth data 0.01 recovers hazard ratios within sampling error,
+    # while 0.1 shrank a true 2.0x driver to ~1.8x. Fall back to the stronger
+    # penalty only if a nearly separable dataset won't converge.
+    try:
+        cph = CoxPHFitter(penalizer=COX_PENALIZER).fit(frame, duration_col=tenure_col, event_col=churn_col)
+    except Exception:
+        cph = CoxPHFitter(penalizer=COX_FALLBACK_PENALIZER).fit(frame, duration_col=tenure_col, event_col=churn_col)
     return CoxModel(
         cph=cph, churn_col=churn_col, tenure_col=tenure_col, id_col=id_col,
         numeric_cols=numeric, cat_cols=cats, features=features, frame=frame,

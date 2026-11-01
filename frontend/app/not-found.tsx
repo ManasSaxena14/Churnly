@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { RetentionOrbit } from "@/components/three/RetentionOrbit";
+import { RetentionOrbit } from "@/components/three/lazy";
 import { Magnetic } from "@/components/motion";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 
