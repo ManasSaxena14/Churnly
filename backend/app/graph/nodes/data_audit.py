@@ -17,7 +17,7 @@ def data_audit_node(state: RetentionGraphState) -> dict:
     try:
         raw_csv_path = state.get("raw_csv_path", "")
         conn = duckdb.connect(":memory:")
-        df = conn.execute(f"SELECT * FROM read_csv_auto('{raw_csv_path}')").df()
+        df = conn.execute("SELECT * FROM read_csv_auto(?)", [raw_csv_path]).df()
 
         logs = []
         quality_metrics = {}

@@ -9,6 +9,7 @@ Adds:    hypothesis_status, verified_root_causes
 from __future__ import annotations
 
 from app.graph.state import RetentionGraphState
+from app.rag.store import valid_citations
 
 
 def hypothesis_validation_node(state: RetentionGraphState) -> dict:
@@ -28,6 +29,12 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
             cause = hypothesis.get("hypothesis", "")
             confidence = hypothesis.get("confidence", 0)
             robustness = robustness_scores.get(cause, 0.5)
+            # Keep the knowledge-base sources behind each cause: the evidence
+            # dossier and groundedness check read them from here.
+            provenance = {
+                "citations": valid_citations(hypothesis.get("citations")),
+                "supported_by": list(hypothesis.get("supported_by") or []),
+            }
 
             # Hypothesis is "verified" if:
             # - Confidence > 0.50 AND
@@ -40,6 +47,7 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "evidence": "Statistical validation passed",
                     "p_value": round(1 - confidence, 3),
                     "recommendation": "Proceed to constraint-aware strategy design",
+                    **provenance,
                 })
                 hypothesis_status = "verified"
             elif confidence > 0.35:
@@ -50,6 +58,7 @@ def hypothesis_validation_node(state: RetentionGraphState) -> dict:
                     "evidence": "Weak statistical support",
                     "p_value": round(1 - confidence, 3),
                     "recommendation": "Require additional discovery iterations",
+                    **provenance,
                 })
                 if hypothesis_status != "verified":
                     hypothesis_status = "weak_proof"

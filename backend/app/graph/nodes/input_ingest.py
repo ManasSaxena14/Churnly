@@ -38,7 +38,7 @@ def input_ingest_node(state: RetentionGraphState) -> dict:
 
         # Load CSV with DuckDB (auto-detects schema)
         conn = duckdb.connect(":memory:")
-        df = conn.execute(f"SELECT * FROM read_csv_auto('{raw_csv_path}')").df()
+        df = conn.execute("SELECT * FROM read_csv_auto(?)", [raw_csv_path]).df()
 
         # Detect key columns from names, then apply what the user confirmed on
         # the column-confirmation screen (their choice always wins).

@@ -1,7 +1,7 @@
 # Web framework
 fastapi==0.136.1
 uvicorn==0.46.0
-python-multipart==0.0.28
+python-multipart==0.0.31
 
 # Config / validation
 python-dotenv==1.2.2
@@ -9,10 +9,11 @@ pydantic==2.13.4
 typing-extensions==4.15.0
 
 # LangChain / LangGraph stack
-langchain-core==1.4.0
+langchain-core==1.7.3
 langchain-google-genai==4.2.2
 langchain-groq==1.1.2
-langgraph==1.2.0
+langgraph==1.2.19
+langgraph-sdk==0.4.11
 
 # Data + survival analysis
 numpy==2.4.4

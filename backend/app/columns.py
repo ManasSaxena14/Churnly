@@ -199,16 +199,26 @@ def needs_churn_normalizing(df: pd.DataFrame, churn_col: str | None) -> bool:
     return not s.empty and (pd.api.types.is_bool_dtype(s) or not pd.api.types.is_numeric_dtype(s))
 
 
-def inspect_upload(upload_dir: str, file_path: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Everything the confirm screen needs for one uploaded file."""
-    import duckdb
+def resolve_upload(upload_dir: str, file_path: str) -> str:
+    """Map a client-supplied upload id to the real file inside `upload_dir`.
 
+    Only ids that /upload itself issues are accepted, so a request can never
+    point the pipeline at another file on the server."""
     name = os.path.basename(file_path or "")
-    if not UPLOAD_NAME_RE.match(name):
+    if name != (file_path or "") or not UPLOAD_NAME_RE.match(name):
         raise ValueError("Unknown upload id")
     path = os.path.join(upload_dir, name)
     if not os.path.exists(path):
         raise FileNotFoundError(name)
+    return path
+
+
+def inspect_upload(upload_dir: str, file_path: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Everything the confirm screen needs for one uploaded file."""
+    import duckdb
+
+    path = resolve_upload(upload_dir, file_path)
+    name = os.path.basename(path)
     df = duckdb.connect(":memory:").execute("SELECT * FROM read_csv_auto(?)", [path]).df()
     detected = detect_columns(df)
     resolved = apply_mapping(df, detected, mapping)

@@ -9,7 +9,7 @@ Called by: strategy_skeptic_node (between strategy_merge and simulation).
 from __future__ import annotations
 
 import json
-from typing import Any, List, Dict
+from typing import Any, List
 from pydantic import BaseModel, Field
 from app.graph.state import RetentionGraphState
 from app.graph.utils import safe_llm_invoke
@@ -51,7 +51,7 @@ def run_strategy_skeptic(state: RetentionGraphState) -> dict[str, Any]:
         verified_causes = state.get("verified_root_causes", []) or []
         top_segments = state.get("top_segments", []) or []
         q = state.get("questionnaire", {}) or {}
-        constrained_brief = state.get("constrained_brief", {}) or {}
+        state.get("constrained_brief", {}) or {}
 
         if not merged_strategies:
             return {

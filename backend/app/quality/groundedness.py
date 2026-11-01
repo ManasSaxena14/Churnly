@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.rag.store import valid_citations
+
 
 def _problem_checks(problem: dict[str, Any]) -> dict[str, bool]:
     chain = problem.get("rationale_chain") or {}
@@ -28,7 +30,7 @@ def _problem_checks(problem: dict[str, Any]) -> dict[str, bool]:
     # Older runs (before BH) have no `significant` key on the dossier stat —
     # treat a present stat id as supported in that case.
     stat_significant = has_stat and stat.get("significant", True) is not False
-    has_citation = bool(cause.get("citations"))
+    has_citation = bool(valid_citations(cause.get("citations")))
     has_sim = sim.get("mean_lift") is not None
     return {
         "stat": stat_significant,

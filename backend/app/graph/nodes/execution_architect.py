@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Union
+from typing import List
 from datetime import datetime
 
 from langchain_core.prompts import ChatPromptTemplate

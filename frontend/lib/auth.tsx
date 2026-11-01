@@ -73,8 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSigningOut(true);
     await post("/auth/logout").catch(() => {});
     setUser(null); setStatus("anon");
-    // Hard navigation home: clears any per-user state held in memory.
-    window.location.assign("/");
+    // Drop this user's cached form answers, uploaded CSV text and run
+    // snapshots so the next person on this browser can't see them.
+    try { sessionStorage.clear(); } catch { /* storage blocked */ }
+    // Full page load home (replace: Back can't return to a signed-in page);
+    // also clears any per-user state held in memory.
+    window.location.replace(new URL("/", window.location.origin).href);
   }, []);
 
   const value = useMemo(() => ({ user, status, login, signup, logout, signingOut }), [user, status, login, signup, logout, signingOut]);

@@ -94,7 +94,7 @@ def _deterministic_layer(csv_path: pathlib.Path) -> dict[str, Any]:
     state: dict[str, Any] = {"raw_csv_path": str(csv_path), "questionnaire": {}, "errors": []}
     state.update(input_ingest_node(state))
     state.update(feature_engineering_node(state))
-    df = duckdb.connect(":memory:").execute(f"SELECT * FROM read_csv_auto('{state['raw_csv_path']}')").df()
+    df = duckdb.connect(":memory:").execute("SELECT * FROM read_csv_auto(?)", [state["raw_csv_path"]]).df()
     detected = state["input_context"]["detected_columns"]
     stats = compute_bucket_stats(df, get_churn_column(df), detected)
     drivers = (state["feature_store"].get("predictive_churn_risk") or {}).get("driver_features", [])

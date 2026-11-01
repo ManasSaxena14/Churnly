@@ -17,7 +17,7 @@ from app.graph.utils import get_churn_column, safe_llm_invoke
 from app.config import get_llm, gemini_model
 from langchain_core.prompts import ChatPromptTemplate
 from app.graph.state import RetentionGraphState
-from app.rag.store import retrieve as rag_retrieve
+from app.rag.store import retrieve as rag_retrieve, valid_citations
 from app.rag.hyde import hypothetical_segment_answer
 from app.graph.stream_utils import push_progress
 from app.stats import compute_bucket_stats
@@ -222,7 +222,7 @@ def run_forensic_detective(state: RetentionGraphState, job_id: str | None = None
 
         # Load CSV for actual statistical analysis
         conn = duckdb.connect(":memory:")
-        df = conn.execute(f"SELECT * FROM read_csv_auto('{raw_csv_path}')").df()
+        df = conn.execute("SELECT * FROM read_csv_auto(?)", [raw_csv_path]).df()
 
         # Calculate actual statistics from data (z-tested + BH-corrected in app.stats)
         # Detected columns from input_ingest (user-confirmed when available)
@@ -430,7 +430,7 @@ Requirements:
                 ids.add(cited_id)
             for hit in per_cause_evidence.get(cause, []):
                 ids.add(hit["id"])
-            merged_citations[cause] = sorted(ids)
+            merged_citations[cause] = valid_citations(list(ids))
 
         return {
             "agent": "forensic_detective",

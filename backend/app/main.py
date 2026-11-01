@@ -3,6 +3,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import logging
+from contextlib import asynccontextmanager
+import time
 import uuid
 import traceback
 import inngest
@@ -12,7 +14,6 @@ import json
 import math
 import os
 import pathlib
-import shutil
 
 load_dotenv()
 
@@ -36,7 +37,7 @@ from app.shared import active_streams, push_event, JobCancelled, UPLOAD_DIR
 from app import observability as obs
 from app.quality import groundedness_report
 from app.runs import save_run, load_run, load_demo
-from app.columns import inspect_upload
+from app.columns import inspect_upload, resolve_upload
 from typing import Dict, Any
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -55,10 +56,6 @@ def _sanitize(obj):
         return [_sanitize(v) for v in obj]
     return obj
 
-app = FastAPI(title="Churnly API", description="Evidence-gated multi-agent retention analysis.")
-
-
-@app.on_event("startup")
 def _prewarm_rag() -> None:
     """Load Chroma + the ONNX embedder in the background at boot.
 
@@ -76,6 +73,15 @@ def _prewarm_rag() -> None:
             print(f"[startup] RAG prewarm failed (non-fatal): {e}", flush=True)
 
     threading.Thread(target=_warm, daemon=True, name="rag-prewarm").start()
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    _prewarm_rag()
+    yield
+
+
+app = FastAPI(title="Churnly API", description="Evidence-gated multi-agent retention analysis.", lifespan=_lifespan)
 
 # Comma-separated list, e.g. "https://churnly.vercel.app". Login uses cookies,
 # which browsers only send cross-origin to an explicit allow-list (never "*").
@@ -337,7 +343,7 @@ async def _run_analysis_job(ctx, step):
                 push_event(job_id, {"type": "run_metrics", "data": {**obs.snapshot(job_id), "final": True}})
                 push_event(job_id, {"type": "complete", "message": "Analysis finished.", "data": {}})
                 _schedule_cleanup("complete")
-        except JobCancelled as e:
+        except JobCancelled:
             print(f"[CANCEL] job {job_id} cancelled mid-pipeline", flush=True)
             if stream:
                 push_event(job_id, {
@@ -464,8 +470,9 @@ async def upload_file(file: UploadFile = File(...), user: dict = Depends(require
         return {"status": "success", "file_path": temp_filename, "original_name": file.filename}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+    except Exception:
+        logging.getLogger("churnly.api").exception("Upload failed")
+        raise HTTPException(status_code=500, detail="Upload failed. Please try again.")
 
 @app.post("/columns")
 async def inspect_columns(body: Dict[str, Any] = Body(...), user: dict = Depends(require_user)):
@@ -494,6 +501,12 @@ async def run_analysis(
     ),
     user: dict = Depends(require_user),
 ):
+    # The CSV must be one this API issued via /upload — never a path of the
+    # client's choosing (it's read by DuckDB on this server).
+    try:
+        resolve_upload(UPLOAD_DIR, str(req_body.get("raw_csv_path") or ""))
+    except (ValueError, FileNotFoundError):
+        raise HTTPException(status_code=400, detail="Upload not found — please re-upload the CSV.")
     try:
         job_id = str(uuid.uuid4())
         active_streams[job_id] = {
@@ -509,8 +522,9 @@ async def run_analysis(
         
         runner = await _dispatch_job(req_body)
         return {"status": "queued", "job_id": job_id, "runner": runner, "message": "Analysis started in background"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e) + "\n" + traceback.format_exc())
+    except Exception:
+        logging.getLogger("churnly.api").exception("Could not start analysis")
+        raise HTTPException(status_code=500, detail="Couldn't start the analysis. Please try again.")
 
 def _replay_saved(events: list[dict]):
     async def gen():
@@ -609,6 +623,24 @@ def compare(a: str, b: str, user: dict = Depends(require_user)):
     return compare_runs(_dataset(a, user), _dataset(b, user))
 
 
+# Copilot questions spend LLM quota: cap their size and how often one account can ask.
+COPILOT_MAX_QUESTION = 1000
+COPILOT_RATE = (int(os.getenv("COPILOT_MAX_PER_WINDOW", "30")), 600)  # questions per 10 minutes
+_copilot_calls: dict[str, list[float]] = {}
+
+
+def _copilot_limited(user_id: str) -> bool:
+    limit, window = COPILOT_RATE
+    now = time.monotonic()
+    calls = [t for t in _copilot_calls.get(user_id, []) if now - t < window]
+    if len(calls) >= limit:
+        _copilot_calls[user_id] = calls
+        return True
+    calls.append(now)
+    _copilot_calls[user_id] = calls
+    return False
+
+
 @app.post("/runs/{job_id}/copilot")
 def run_copilot(job_id: str, body: Dict[str, Any] = Body(...), user: dict = Depends(require_user)):
     """Streams the copilot's steps and answer as SSE (see app/copilot/agent.py)."""
@@ -617,8 +649,16 @@ def run_copilot(job_id: str, body: Dict[str, Any] = Body(...), user: dict = Depe
     question = str(body.get("question") or "").strip()
     if not question:
         raise HTTPException(status_code=400, detail="Ask a question")
+    if len(question) > COPILOT_MAX_QUESTION:
+        raise HTTPException(status_code=400, detail=f"Keep questions under {COPILOT_MAX_QUESTION} characters.")
+    if _copilot_limited(user["id"]):
+        raise HTTPException(status_code=429, detail="You're asking very quickly — wait a minute and try again.")
     ds = _dataset(job_id, user)  # login required even for the demo: it spends LLM quota
-    history = body.get("history") if isinstance(body.get("history"), list) else []
+    history = [
+        {"role": t.get("role"), "content": str(t.get("content") or "")[:2000]}
+        for t in (body.get("history") if isinstance(body.get("history"), list) else [])[-10:]
+        if isinstance(t, dict) and t.get("role") in ("user", "assistant")
+    ]
 
     def gen():
         try:

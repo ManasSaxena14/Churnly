@@ -5,6 +5,7 @@ Chroma-backed retention knowledge retrieval.
 from __future__ import annotations
 
 import os
+import threading
 from typing import Any
 import chromadb
 from chromadb.config import Settings
@@ -14,6 +15,7 @@ _COLLECTION_NAME = "retention_knowledge"
 
 _client = None
 _collection = None
+_seed_lock = threading.Lock()
 
 
 def get_client():
@@ -35,7 +37,42 @@ def get_collection():
             name=_COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
+        _ensure_corpus(_collection)
     return _collection
+
+
+def _ensure_corpus(col) -> None:
+    """The vector store isn't committed to git, so a fresh clone or a new
+    server starts with it empty — and every retrieval would silently return
+    nothing. Load the bundled corpus whenever the store doesn't match it."""
+    from app.rag.corpus_data import CORPUS
+
+    with _seed_lock:
+        if col.count() == len(CORPUS):
+            return
+        existing = col.get(include=[]).get("ids") or []
+        if existing:
+            col.delete(ids=existing)
+        col.add(
+            ids=[c["id"] for c in CORPUS],
+            documents=[c["text"] for c in CORPUS],
+            metadatas=[c["metadata"] for c in CORPUS],
+        )
+        print(f"[RAG] Loaded {len(CORPUS)} knowledge-base chunks into '{col.name}'", flush=True)
+
+
+def known_source_ids() -> frozenset[str]:
+    """Ids of real knowledge-base documents — the only valid citations."""
+    from app.rag.corpus_data import CORPUS
+
+    return frozenset(c["id"] for c in CORPUS)
+
+
+def valid_citations(ids: list[Any] | None) -> list[str]:
+    """Keep only citations that point at an actual knowledge-base document
+    (LLMs sometimes 'cite' made-up labels)."""
+    known = known_source_ids()
+    return sorted({str(i) for i in (ids or []) if str(i) in known})
 
 
 def retrieve(query: str, k: int = 5, signals: list[str] | None = None) -> list[dict[str, Any]]:

@@ -8,7 +8,7 @@ Called by: pattern_matcher_node (parallel with forensic_detective, fan-in at dia
 from __future__ import annotations
 
 from typing import Any, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from app.graph.utils import safe_llm_invoke
 from app.config import get_llm
 from app.graph.state import RetentionGraphState

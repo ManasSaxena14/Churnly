@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, List, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from app.graph.state import RetentionGraphState
 from app.graph.utils import safe_llm_invoke
 from app.config import get_llm, gemini_model

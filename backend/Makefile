@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # Configuration
 PYTHON_VENV := .venv
 PYTHON_BIN := $(PYTHON_VENV)/bin/python
-UVICORN_BIN := $(PYTHON_VENV)/bin/uvicorn
+UVICORN_BIN := $(PYTHON_BIN) -m uvicorn
 APP_MODULE := app.main:app
 PORT ?= 8000
 INNGEST_URL := http://127.0.0.1:$(PORT)/api/inngest
