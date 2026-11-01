@@ -228,6 +228,9 @@ def classify_error(e: Exception) -> Literal["rate_limit", "bad_key", "model_unav
 
 _MAX_TRANSIENT_RETRIES = int(os.getenv("LLM_MAX_TRANSIENT_RETRIES", "2"))
 LLM_TIMEOUT_S = float(os.getenv("LLM_TIMEOUT_S", "45"))
+# Free tiers limit requests per minute: when every key is rate-limited, wait
+# this long and retry the chain once before failing (0 = fail immediately).
+RATE_LIMIT_WAIT_S = float(os.getenv("LLM_RATE_LIMIT_WAIT_S", "30"))
 
 
 def _is_timeout(e: Exception) -> bool:
@@ -329,6 +332,23 @@ class FailoverLLM:
         return out
 
     def _call_with_failover(self, fn, agent: str | None = None, config: dict | None = None):
+        """Run the fallback chain; if it fails only because every free-tier key is
+        rate-limited, wait for the per-minute window to reset and try once more."""
+        try:
+            return self._call_chain(fn, agent, config)
+        except RuntimeError as e:
+            if RATE_LIMIT_WAIT_S <= 0 or classify_error(e.__cause__ or e) != "rate_limit":
+                raise
+            print(f"[LLM Factory] all keys rate-limited → waiting {RATE_LIMIT_WAIT_S:g}s, then retrying once", flush=True)
+            time.sleep(RATE_LIMIT_WAIT_S)
+            with _lock:
+                for provider in _dead_keys:
+                    _dead_keys[provider].clear()
+            self._target = 0
+            self._rotate()
+            return self._call_chain(fn, agent, config)
+
+    def _call_chain(self, fn, agent: str | None = None, config: dict | None = None):
         """Execute fn(llm, config) across keys, retries and the fallback chain."""
         from app import observability as obs
 

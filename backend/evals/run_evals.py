@@ -348,7 +348,7 @@ def markdown_report(mode: str, results: dict[str, Any], meta: dict[str, Any]) ->
             ("mean_tokens", "Mean tokens / run"),
             ("mean_cost_usd", "Mean cost / run (USD)"),
         ):
-            pct = key in ("cause_recall", "unsupported_cause_rate", "grounded_rate")
+            pct = key in ("cause_recall", "unsupported_cause_rate", "final_unsupported_cause_rate", "grounded_rate")
             lines.append(f"| {label} | " + " | ".join(_fmt(results[c]["summary"][key], pct) for c in cols) + " |")
     lines += ["", f"_Generated {time.strftime('%Y-%m-%d %H:%M')}_", ""]
     return "\n".join(lines)
