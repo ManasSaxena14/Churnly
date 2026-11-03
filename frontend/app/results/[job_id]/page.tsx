@@ -32,6 +32,7 @@ import { CopilotLauncher, CopilotPanel } from "./components/CopilotPanel";
 import { ResultTabs, type ResultTab } from "./components/ResultTabs";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify } from "./export";
 import { celebrate } from "@/lib/celebrate";
+import { backendFetch } from "@/lib/backend";
 
 // The stage timer re-renders this page every second while a run is live.
 // Memoised sections only re-render when their own stage data arrives, so the
@@ -110,7 +111,7 @@ export default function ResultsPage() {
   const respondToHitl = async (answers: Record<string, string>) => {
     setHitlSubmitting(true);
     try {
-      await fetch(`${API_BASE}/analyze/${jobId}/respond`, { credentials: "include",
+      await backendFetch(`${API_BASE}/analyze/${jobId}/respond`, { credentials: "include",
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
@@ -152,7 +153,7 @@ export default function ResultsPage() {
     if (!confirm("Cancel this analysis? In-flight work will be discarded.")) return;
     setIsCancelling(true);
     try {
-      const res = await fetch(`${API_BASE}/analyze/${jobId}/cancel`, { credentials: "include", method: "POST" });
+      const res = await backendFetch(`${API_BASE}/analyze/${jobId}/cancel`, { credentials: "include", method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       // Backend pushes a `cancelled` SSE event; UI updates from that handler.
       // If SSE already dropped, force-set state here so user gets feedback.
@@ -182,13 +183,13 @@ export default function ResultsPage() {
       if (csvText) {
         const fd = new FormData();
         fd.append("file", new File([csvText], csvName, { type: "text/csv" }));
-        const up = await fetch(`${API_BASE}/upload`, { credentials: "include", method: "POST", body: fd });
+        const up = await backendFetch(`${API_BASE}/upload`, { credentials: "include", method: "POST", body: fd });
         if (up.ok) {
           payload.raw_csv_path = (await up.json()).file_path;
         }
       }
 
-      const res = await fetch(`${API_BASE}/analyze`, { credentials: "include",
+      const res = await backendFetch(`${API_BASE}/analyze`, { credentials: "include",
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });

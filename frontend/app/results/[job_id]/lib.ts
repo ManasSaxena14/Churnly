@@ -1,6 +1,7 @@
 import type { Ctx } from "./types";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Same-origin: next.config.ts forwards /api/* to the backend.
+export const API_BASE = "/api";
 
 export const pct = (n: number) => `${Math.round(n * 100)}%`;
 

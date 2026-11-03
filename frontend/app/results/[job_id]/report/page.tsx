@@ -12,6 +12,7 @@ import { friendlyStat } from "@/lib/labels";
 import { downloadText, playbookToMarkdown, reportDataFromStages, slugify, type ReportData } from "../export";
 import type { ProblemSolution, RunMetrics } from "../types";
 import { celebrate } from "@/lib/celebrate";
+import { backendFetch } from "@/lib/backend";
 
 /* Printable playbook. "Save as PDF" uses the browser's print engine, which
    gives real selectable text and proper page breaks (no canvas screenshots).
@@ -50,7 +51,7 @@ async function loadReport(jobId: string): Promise<ReportData | null> {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}`, { credentials: "include" });
+    const res = await backendFetch(`${API_BASE}/runs/${encodeURIComponent(jobId)}`, { credentials: "include" });
     if (!res.ok) return null;
     const run = await res.json();
     const { stages, metrics } = foldEvents(run.events ?? []);

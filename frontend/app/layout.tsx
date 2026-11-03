@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { AuthProvider } from "@/lib/auth";
 import { RouteProgress } from "@/components/feedback/RouteProgress";
 import { TaskToasts } from "@/components/feedback/TaskToasts";
+import { BackendNotice } from "@/components/feedback/BackendNotice";
 
 // Geist (Vercel's typeface) for UI + display, Geist Mono for data and code,
 // Instrument Serif italic for the editorial accent words.
@@ -28,10 +29,22 @@ const geistMono = Geist_Mono({
   weight: ["400", "500"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://churnly-1.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: `${BRAND.name} — ${BRAND.tagline}`,
   description: BRAND.description,
   applicationName: BRAND.name,
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: BRAND.name,
+    title: `${BRAND.name} — ${BRAND.tagline}`,
+    description: BRAND.description,
+    images: [{ url: "/brand/churnly-mark.svg" }],
+  },
+  twitter: { card: "summary", title: `${BRAND.name} — ${BRAND.tagline}`, description: BRAND.description },
 };
 
 export default function RootLayout({
@@ -56,6 +69,7 @@ export default function RootLayout({
         <RouteProgress />
         <AuthProvider>{children}</AuthProvider>
         <TaskToasts />
+        <BackendNotice />
       </body>
     </html>
   );

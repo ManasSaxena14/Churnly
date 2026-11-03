@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { API_BASE } from "./demo";
+import { backendFetch } from "./backend";
 
 /* Session state for the whole app. The session itself is an HttpOnly cookie
    set by the backend (app/auth.py) — this context only mirrors who is
@@ -30,7 +31,7 @@ export class AuthError extends Error {
 async function post(path: string, body?: unknown): Promise<{ user?: User }> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    res = await backendFetch(`${API_BASE}${path}`, {
       method: "POST", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let alive = true;
-    fetch(`${API_BASE}/auth/me`, { credentials: "include", cache: "no-store" })
+    backendFetch(`${API_BASE}/auth/me`, { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (alive) { setUser(d?.user ?? null); setStatus(d?.user ? "authed" : "anon"); } })
       .catch(() => { if (alive) setStatus("anon"); });

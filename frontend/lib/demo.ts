@@ -1,6 +1,7 @@
 "use client";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Same-origin: next.config.ts forwards /api/* to the backend.
+export const API_BASE = "/api";
 
 // Demo defaults — pre-fill the questionnaire so a one-click demo runs the full
 // pipeline against the bundled 300-row churn dataset. Shape mirrors FormData in

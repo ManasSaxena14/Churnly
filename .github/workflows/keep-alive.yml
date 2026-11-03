@@ -1,0 +1,23 @@
+# Keeps the free Render backend from sleeping (it idles out after 15 minutes),
+# so visitors don't wait ~1 minute on their first click. Free on GitHub
+# Actions. GitHub may delay scheduled runs a little and pauses them after
+# 60 days without commits; an external pinger (e.g. UptimeRobot) is a good
+# second line.
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Ping the API (via the website proxy)
+        run: |
+          for url in https://churnly-1.vercel.app/api/healthz https://churnly-1.onrender.com/healthz; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$url" || true)
+            echo "$url -> $code"
+          done

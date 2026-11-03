@@ -11,6 +11,8 @@
 
 Upload a customer CSV. Get a defensible, evidence-cited retention playbook — not a hallucinated one.
 
+**[▶ Live demo — churnly-1.vercel.app](https://churnly-1.vercel.app)** · _first load may take ~30 s while the free server wakes up_
+
 <sub>Retention intelligence with receipts.</sub>
 
 CSV → Survival analysis → BH-corrected significance gating → Self-consistency voting → Adversarial review → RAG-anchored Monte Carlo → Streamed playbook with receipts.

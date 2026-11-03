@@ -15,6 +15,7 @@ import { ColumnConfirm, useColumnInspection } from "@/components/form/ColumnConf
 import { SampleDataCard } from "@/components/form/SampleDataCard";
 import { LaunchOverlay, type LaunchStage } from "@/components/form/LaunchOverlay";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { backendFetch } from "@/lib/backend";
 
 const OUTCOMES: [string, string][] = [
   ["Risk score for every customer", "Who is likely to leave next, and why — exportable as CSV."],
@@ -293,7 +294,7 @@ export default function FormPage() {
         const formData = new FormData();
         formData.append("file", form.csvFile);
 
-        const uploadRes = await fetch(`${API_BASE}/upload`, { credentials: "include",
+        const uploadRes = await backendFetch(`${API_BASE}/upload`, { credentials: "include",
           method: "POST",
           body: formData,
         });
@@ -351,7 +352,7 @@ export default function FormPage() {
       sessionStorage.setItem("latest_form_state", JSON.stringify(form));
 
       setLaunchStage("queue");
-      const res = await fetch(`${API_BASE}/analyze`, { credentials: "include",
+      const res = await backendFetch(`${API_BASE}/analyze`, { credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

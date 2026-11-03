@@ -535,11 +535,16 @@ async def run_analysis(
         logging.getLogger("churnly.api").exception("Could not start analysis")
         raise HTTPException(status_code=500, detail="Couldn't start the analysis. Please try again.")
 
+# Live event streams pass through the website's /api proxy: tell every hop
+# not to buffer or compress them, or updates arrive in one late burst.
+SSE_HEADERS = {"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"}
+
+
 def _replay_saved(events: list[dict]):
     async def gen():
         for event in events:
             yield f"data: {json.dumps(event)}\n\n"
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    return StreamingResponse(gen(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 @app.get("/demo")
@@ -684,7 +689,7 @@ def run_copilot(job_id: str, body: Dict[str, Any] = Body(...), user: dict = Depe
             yield f"data: {json.dumps({'type': 'error', 'message': msg})}\n\n"
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    return StreamingResponse(gen(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 @app.get("/runs/{job_id}")
@@ -753,7 +758,7 @@ async def stream_job(job_id: str, request: Request, user: dict = Depends(require
         # active_streams cleanup happens in the worker (_schedule_cleanup, 120s
         # after `complete`) — never here, so reconnects can still replay.
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 @app.post("/analyze/{job_id}/cancel")
 async def cancel_job(job_id: str, user: dict = Depends(require_user)):

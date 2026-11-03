@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Loader2, RotateCw, XCircle } from "lucide-
 import { API_BASE } from "@/lib/demo";
 import { cn } from "@/lib/utils";
 import { celebrate } from "@/lib/celebrate";
+import { backendFetch } from "@/lib/backend";
 
 export type Role = "churn" | "tenure" | "customer_id" | "usage" | "support" | "plan" | "contract" | "channel";
 export type ColumnMapping = Partial<Record<Role, string | null>>;
@@ -34,7 +35,7 @@ export function useColumnInspection(file: File | null) {
   const reqId = useRef(0);
 
   const inspect = useCallback(async (filePath: string, mapping?: ColumnMapping): Promise<Inspection> => {
-    const res = await fetch(`${API_BASE}/columns`, { credentials: "include",
+    const res = await backendFetch(`${API_BASE}/columns`, { credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ file_path: filePath, mapping }),
@@ -53,7 +54,7 @@ export function useColumnInspection(file: File | null) {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const up = await fetch(`${API_BASE}/upload`, { credentials: "include", method: "POST", body: fd });
+      const up = await backendFetch(`${API_BASE}/upload`, { credentials: "include", method: "POST", body: fd });
       if (!up.ok) {
         const detail = await up.json().then((d) => d?.detail).catch(() => null);
         throw new Error(detail || "We couldn't upload your file. Please check the server is running and try again.");
@@ -65,7 +66,7 @@ export function useColumnInspection(file: File | null) {
       if (inspection.errors.length === 0) celebrate("Columns detected", { description: "Review the mapping below, then run the analysis." });
     } catch (err) {
       if (id !== reqId.current) return;
-      const message = err instanceof TypeError ? `We can't reach the Churnly server (${API_BASE}). Please make sure it's running.` : (err as Error).message;
+      const message = err instanceof TypeError ? "We can't reach the analysis server right now. Please try again in a minute." : (err as Error).message;
       setState({ status: "error", message });
     }
   }, [file, inspect]);

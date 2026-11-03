@@ -11,6 +11,20 @@ import chromadb
 from chromadb.config import Settings
 
 _PERSIST_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
+# Keep Chroma's ONNX embedding model inside the project, not ~/.cache: on
+# Render only the project folder survives from build to runtime, so the model
+# is downloaded once at build (python -m app.warmup) instead of on every cold
+# start — an 80 MB download at boot can exceed the 512 MB free-tier memory.
+_MODEL_DIR = os.path.join(os.path.dirname(__file__), "onnx_cache", "onnx_models", "all-MiniLM-L6-v2")
+
+
+def _use_project_model_dir() -> None:
+    from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import ONNXMiniLM_L6_V2
+
+    ONNXMiniLM_L6_V2.DOWNLOAD_PATH = _MODEL_DIR
+
+
+_use_project_model_dir()
 _COLLECTION_NAME = "retention_knowledge"
 
 _client = None
