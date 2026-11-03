@@ -93,7 +93,7 @@ Things the graph does that aren't visible in the final playbook:
 - **Kaplan-Meier + CoxPH** on the raw tenure + churn columns (via `lifelines`) — powers the churn-probability slider and surfaces the top-5 hazard-ratio driver features into every downstream prompt. Categorical columns (plan tier, contract length) are one-hot encoded and ID-like columns are automatically excluded, so the hazard model reasons about real behavior instead of row noise.
 - **Two-proportion z-test on every statistical bucket** — plan tier, contract cadence, support volume, usage decile, tenure bucket. Every number handed to an LLM carries a `p_value` and a `significant` flag; prompts are instructed to discount non-significant splits instead of building a narrative on noise.
 - **Self-consistency on the forensic detective** — in deep mode, the candidate-cause prompt runs 3× in parallel at temps 0.2 / 0.5 / 0.7, then a vote keeps only causes appearing in ≥2 runs. Filters single-pass hallucinations.
-- **HyDE-anchored RAG retrieval** — instead of querying Chroma with bare keywords, the forensic agent first writes a 3-sentence hypothetical answer for the priority segment, then embeds that, then retrieves. Plus a second per-cause retrieval pass for cause-specific evidence.
+- **HyDE-anchored RAG retrieval** — instead of searching with bare keywords, the forensic agent first writes a 3-sentence hypothetical answer for the priority segment, then retrieves with that. Plus a second per-cause retrieval pass for cause-specific evidence.
 - **Strategy skeptic** — an adversarial LLM pass that scores robustness, flags weak tactics, suggests alternatives, and can hard-fail the critic gate if any tactic has a high-severity weakness.
 - **RAG-anchored Monte Carlo** — simulation pulls expected-lift priors from retrieved framework chunks (e.g. "8–12% lift typical for activation nudges") instead of trusting LLM-claimed lifts.
 - **Evidence dossier** — for each top-3 problem, a Python-assembled row pairs the triggering stat, root cause + citations, tactic, simulated outcome, skeptic risk, and mitigation. The architect prompt is required to map problem #N to dossier row #N.
@@ -166,7 +166,7 @@ flowchart TD
     HV -.->|weak| BM
     SC -.->|low_lift / violation| HITL
 
-    RAG[(Chroma<br/>HyDE + signal-boosted)]:::ext
+    RAG[(BM25 knowledge base<br/>HyDE + signal-boosted)]:::ext
     FD -.->|broad + per-cause| RAG
     CR -.->|competitor_positioning| RAG
     SIM -.->|lift priors| RAG
@@ -189,9 +189,9 @@ Entry: `input_ingest` · Exit: `execution_architect → END` · Compiled in [`ba
 | —    | [retry_handler](./docs/nodes/retry-handler.md)                 | Loop back if score < 0.5                            | —                                     |
 | 3    | [feature_engineering](./docs/nodes/feature-engineering.md)     | RFM, LTV, CoxPH risk + top-5 hazard drivers (categoricals one-hot encoded, IDs excluded) | lifelines CoxPHFitter |
 | 4    | [behavioral_map](./docs/nodes/behavioral-map.md)               | KM survival curve + cohorts                         | lifelines KaplanMeierFitter           |
-| 5a   | [forensic_detective](./docs/nodes/forensic-detective.md)       | Root causes — z-test gated stats + HyDE RAG + self-consistency vote | Gemini (fast/deep) + Chroma (parallel) |
+| 5a   | [forensic_detective](./docs/nodes/forensic-detective.md)       | Root causes — z-test gated stats + HyDE RAG + self-consistency vote | Gemini (fast/deep) + RAG (parallel) |
 | 5b   | [pattern_matcher](./docs/nodes/pattern-matcher.md)             | Segment + sequence discovery                        | Gemini (fast)                         |
-| 5c   | [competitor_research](./docs/nodes/competitor-research.md)     | Counter-positioning evidence (if churn → known competitor) | Chroma only                    |
+| 5c   | [competitor_research](./docs/nodes/competitor-research.md)     | Counter-positioning evidence (if churn → known competitor) | RAG only                       |
 | 5d   | [diagnosis_merge](./docs/nodes/diagnosis-merge.md)             | Merge hypotheses, build significance-ranked top-segments table | pure Python                |
 | 6    | [hypothesis_validation](./docs/nodes/hypothesis-validation.md) | Confidence × robustness gate                        | pure Python                           |
 | 7    | [constraint_add](./docs/nodes/constraint-add.md)               | Feasibility filter over verified causes              | pure Python                           |
@@ -201,7 +201,7 @@ Entry: `input_ingest` · Exit: `execution_architect → END` · Compiled in [`ba
 | 9c   | [growth_hacker](./docs/nodes/growth-hacker.md)                 | AARRR tactics + experiments                         | Groq (`openai/gpt-oss-120b`)          |
 | 9d   | [strategy_merge](./docs/nodes/strategy-merge.md)               | Rank, forward operational fields                    | pure Python                           |
 | 10a  | [strategy_skeptic](./docs/nodes/strategy-skeptic.md)           | Adversarial review of merged tactics                | Gemini (fast/deep)                    |
-| 10b  | [simulation](./docs/nodes/simulation.md)                       | Monte Carlo lift (10k) with RAG-anchored priors     | NumPy + Chroma                        |
+| 10b  | [simulation](./docs/nodes/simulation.md)                       | Monte Carlo lift (10k) with RAG-anchored priors     | NumPy + RAG                           |
 | 11   | [strategy_critic](./docs/nodes/strategy-critic.md)             | Senior-partner review — gated by skeptic severity   | Gemini (fast/deep)                    |
 | 11.5 | [evidence_dossier](./docs/nodes/evidence-dossier.md)           | Per-problem rationale chain (stat → cause → tactic → sim → risk → mitigation) | pure Python |
 | 12   | [execution_architect](./docs/nodes/execution-architect.md)     | Two-pass: reasoning trace → final 30-60-90 playbook | Gemini (fast/deep, trace + structured) |
@@ -214,13 +214,13 @@ Routing thresholds live in [`backend/app/graph/conditions.py`](./backend/app/gra
 
 ## RAG Layer
 
-Three callers retrieve from Chroma:
+Three callers retrieve from the knowledge base:
 
 - **forensic_detective** — broad pass (k=6) using a HyDE-generated hypothetical answer + signal tags, then a per-cause pass (k=3 per top cause) using the cause text itself.
 - **competitor_research** — if the churn-destination questionnaire answer signals a competitor loss, matches against ~40 known competitors (Slack/Teams, HubSpot/Salesforce, Notion/Confluence, Asana/Jira/Linear, …), retrieves k=4 chunks tagged `competitor_positioning`, and parses `Counter-play:` markers into actionable counter-positioning items.
 - **simulation** — per strategy, retrieves k=2 chunks and regex-extracts lift ranges (`10-15%`, `8 pp`) to seed Monte Carlo μ. Falls back to the LLM's self-reported lift only if no citable prior is found in the corpus.
 
-All retrievals get a `+0.05` cosine-score boost per matching signal tag (e.g. `30_day_cliff`, `low_integration`, `competitor_threat`). Corpus lives in [`backend/app/rag/corpus_data.py`](./backend/app/rag/corpus_data.py); re-ingest with `python -m app.rag.ingest` after edits.
+All retrievals get a `+0.05` score boost per matching signal tag (e.g. `30_day_cliff`, `low_integration`, `competitor_threat`). Corpus lives in [`backend/app/rag/corpus_data.py`](./backend/app/rag/corpus_data.py). Retrieval is BM25 keyword search by default: on the 66-document corpus it scored 83% on-topic top-3 precision vs 62% for MiniLM embeddings, loads instantly and needs no model in memory (the free 512 MB host was OOM-killing the embedding model). `RAG_BACKEND=embeddings` switches to Chroma + MiniLM.
 
 ```mermaid
 flowchart LR
@@ -228,7 +228,7 @@ flowchart LR
     S --> H[HyDE<br/>3-sentence hypothetical]
     D --> Q[RAG query + signals]
     H --> Q
-    Q --> R[Chroma.query<br/>broad k=6 + per-cause k=3]
+    Q --> R[BM25 retrieve<br/>broad k=6 + per-cause k=3]
     R --> B[signal boost<br/>+0.05 per tag]
     B --> E[evidence_block<br/>+ per_cause_evidence]
     E --> L[Gemini<br/>self-consistency runs]
@@ -296,7 +296,7 @@ Full detail in [docs/ui-flow.md](./docs/ui-flow.md).
 | LLMs      | Google Gemini (fast tier + deep tier, selected per `analysis_depth`), Groq `openai/gpt-oss-120b` (strategy + critic) |
 | Data      | DuckDB (CSV parsing), Pandas, NumPy, SciPy (two-proportion z-tests + Benjamini-Hochberg), lifelines (KM + CoxPH) |
 | Observability | Per-run metrics over SSE, optional Langfuse tracing |
-| RAG       | ChromaDB (PersistentClient, `all-MiniLM-L6-v2`, cosine + signal boost)                 |
+| RAG       | BM25 over a curated 66-doc corpus + signal boost (optional ChromaDB/MiniLM backend)    |
 | Transport | Server-Sent Events (SSE), broadcast + replay model — refresh-safe                      |
 
 ---
@@ -309,7 +309,7 @@ Full detail in [docs/ui-flow.md](./docs/ui-flow.md).
 ```bash
 # Backend
 cd backend
-make install                      # creates venv + ingests RAG corpus
+make install                      # creates venv + checks the RAG knowledge base
 make dev                          # runs FastAPI + Inngest dev server together
 
 # Frontend
@@ -331,7 +331,7 @@ make demo-promote JOB=<job_id>    # make a finished run the instant demo
 
 Key discovery in `backend/app/config.py` scans `GOOGLE_API_KEY` plus `GOOGLE_API_KEY_1..32` (same for Groq). The failover wrapper round-robins across all live keys and marks a key temporarily dead on a 429 / quota error, reviving it automatically after a cooldown. More keys = more concurrent capacity; deep-mode's parallel self-consistency calls each grab a distinct key.
 
-No data yet? Click **Try the demo** on the landing page — it replays the cached demo run if one has been promoted, otherwise it one-click-fills the questionnaire and runs the pipeline live against a bundled 300-row sample dataset. Or bring your own: sample CSVs live in [`backend/dataForTesting/`](./backend/dataForTesting/). Re-run `python -m app.rag.ingest` after editing `backend/app/rag/corpus_data.py`.
+No data yet? Click **Try the demo** on the landing page — it replays the cached demo run if one has been promoted, otherwise it one-click-fills the questionnaire and runs the pipeline live against a bundled 300-row sample dataset. Or bring your own: sample CSVs live in [`backend/dataForTesting/`](./backend/dataForTesting/).
 
 </details>
 

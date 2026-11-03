@@ -22,8 +22,6 @@ duckdb==1.5.2
 lifelines==0.30.3
 scipy==1.18.1
 
-# RAG vector store
-chromadb==1.5.9
 
 # Background job orchestration
 inngest==0.5.18

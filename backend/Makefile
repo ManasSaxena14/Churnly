@@ -24,7 +24,7 @@ install:
 	mkdir -p $$HOME/.cache
 	rm -rf $$HOME/.cache/chroma
 	ln -sfn $(abspath $(ONNX_CACHE_DIR)) $$HOME/.cache/chroma
-	$(PYTHON_BIN) -m app.rag.ingest
+	$(PYTHON_BIN) -m app.warmup
 	@echo "[install] onnx cache contents:" && ls -lah $(ONNX_CACHE_DIR) || true
 
 build: install

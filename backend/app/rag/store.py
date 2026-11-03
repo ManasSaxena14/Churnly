@@ -1,78 +1,130 @@
 """
-Chroma-backed retention knowledge retrieval.
+Retention knowledge retrieval.
+===============================
+Default backend: BM25 keyword search over the curated corpus — pure Python,
+built in milliseconds, near-zero memory. With 66 short, keyword-dense
+documents it retrieves as well as dense embeddings, and it keeps the API
+inside the 512 MB free hosting tier (the ONNX embedding model alone costs
+~160 MB and was getting the server OOM-killed during analyses).
+
+RAG_BACKEND=embeddings switches to Chroma + MiniLM (app/rag/dense.py) on
+machines with memory to spare. Either way retrieve() returns
+[{id, text, source, topic, score}, …] and signal tags add a +0.05 boost.
 """
 
 from __future__ import annotations
 
+import math
 import os
+import re
 import threading
+from collections import Counter
 from typing import Any
-import chromadb
-from chromadb.config import Settings
 
-_PERSIST_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
-# Keep Chroma's ONNX embedding model inside the project, not ~/.cache: on
-# Render only the project folder survives from build to runtime, so the model
-# is downloaded once at build (python -m app.warmup) instead of on every cold
-# start — an 80 MB download at boot can exceed the 512 MB free-tier memory.
-_MODEL_DIR = os.path.join(os.path.dirname(__file__), "onnx_cache", "onnx_models", "all-MiniLM-L6-v2")
+RAG_BACKEND = (os.getenv("RAG_BACKEND") or "lexical").strip().lower()
 
-
-def _use_project_model_dir() -> None:
-    from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import ONNXMiniLM_L6_V2
-
-    ONNXMiniLM_L6_V2.DOWNLOAD_PATH = _MODEL_DIR
+_TOKEN = re.compile(r"[a-z0-9]+")
+_STOP = frozenset("""
+a an and are as at be been but by can could did do does for from had has have how i if in into is it its
+may more most not of on or our over per so such than that the their them then there these they this to
+too up was we were what when which while who why will with within without you your
+specific intervention interventions framework frameworks root cause causes pattern patterns industry
+""".split())
+_K1, _B = 1.4, 0.75
 
 
-_use_project_model_dir()
-_COLLECTION_NAME = "retention_knowledge"
-
-_client = None
-_collection = None
-_seed_lock = threading.Lock()
-
-
-def get_client():
-    global _client
-    if _client is None:
-        _client = chromadb.PersistentClient(
-            path=_PERSIST_DIR,
-            settings=Settings(anonymized_telemetry=False),
-        )
-    return _client
+def _stem(t: str) -> str:
+    for suf in ("ations", "ation", "ingly", "ing", "edly", "ed", "ies", "es", "s"):
+        if len(t) > len(suf) + 3 and t.endswith(suf):
+            return t[: -len(suf)] + ("y" if suf == "ies" else "")
+    return t
 
 
-def get_collection():
-    """Get or create the collection. Uses Chroma's default all-MiniLM embedder."""
-    global _collection
-    if _collection is None:
-        client = get_client()
-        _collection = client.get_or_create_collection(
-            name=_COLLECTION_NAME,
-            metadata={"hnsw:space": "cosine"},
-        )
-        _ensure_corpus(_collection)
-    return _collection
+def _tokens(text: str) -> list[str]:
+    return [_stem(t) for t in _TOKEN.findall((text or "").lower()) if t not in _STOP and len(t) > 1]
 
 
-def _ensure_corpus(col) -> None:
-    """The vector store isn't committed to git, so a fresh clone or a new
-    server starts with it empty — and every retrieval would silently return
-    nothing. Load the bundled corpus whenever the store doesn't match it."""
-    from app.rag.corpus_data import CORPUS
+class _Bm25:
+    def __init__(self, corpus: list[dict[str, Any]]):
+        self.docs = corpus
+        self.tf: list[Counter] = []
+        for c in corpus:
+            meta = c.get("metadata") or {}
+            # Title-like metadata counts double: it names what the chunk is about.
+            fields = f"{c['text']} {meta.get('topic', '')} {meta.get('topic', '')} {meta.get('source', '')} " \
+                     f"{str(meta.get('signals', '')).replace(',', ' ').replace('_', ' ')}"
+            self.tf.append(Counter(_tokens(fields)))
+        self.len = [sum(tf.values()) for tf in self.tf]
+        self.avg = sum(self.len) / max(1, len(self.len))
+        df: Counter = Counter()
+        for tf in self.tf:
+            df.update(tf.keys())
+        n = len(corpus)
+        self.idf = {t: math.log(1 + (n - d + 0.5) / (d + 0.5)) for t, d in df.items()}
 
-    with _seed_lock:
-        if col.count() == len(CORPUS):
-            return
-        existing = col.get(include=[]).get("ids") or []
-        if existing:
-            col.delete(ids=existing)
-        col.add(
-            ids=[c["id"] for c in CORPUS],
-            documents=[c["text"] for c in CORPUS],
-            metadatas=[c["metadata"] for c in CORPUS],
-        )
-        print(f"[RAG] Loaded {len(CORPUS)} knowledge-base chunks into '{col.name}'", flush=True)
+    def scores(self, query: str) -> list[float]:
+        q = Counter(_tokens(query))
+        out = []
+        for tf, dl in zip(self.tf, self.len):
+            s = 0.0
+            for t, qf in q.items():
+                f = tf.get(t)
+                if f:
+                    s += self.idf[t] * f * (_K1 + 1) / (f + _K1 * (1 - _B + _B * dl / self.avg))
+            out.append(s)
+        return out
+
+
+_index: _Bm25 | None = None
+_index_lock = threading.Lock()
+
+
+def _bm25() -> _Bm25:
+    global _index
+    if _index is None:
+        with _index_lock:
+            if _index is None:
+                from app.rag.corpus_data import CORPUS
+
+                _index = _Bm25(CORPUS)
+    return _index
+
+
+def _retrieve_lexical(query: str, k: int, signals: list[str] | None) -> list[dict[str, Any]]:
+    idx = _bm25()
+    raw = idx.scores(query)
+    top = max(raw) if raw else 0.0
+    wanted = {s.strip() for s in signals or []}
+    chunks = []
+    for doc, s in zip(idx.docs, raw):
+        if s <= 0:
+            continue
+        meta = doc.get("metadata") or {}
+        overlap = len(wanted & {x.strip() for x in str(meta.get("signals", "")).split(",")}) if wanted else 0
+        chunks.append({
+            "id": doc["id"],
+            "text": doc["text"],
+            "source": meta.get("source", "Unknown"),
+            "topic": meta.get("topic", ""),
+            # Relative relevance in [0, 1] (best match = 1) plus the signal boost.
+            "score": round(s / top + overlap * 0.05, 4),
+        })
+    chunks.sort(key=lambda c: c["score"], reverse=True)
+    return chunks[:k]
+
+
+def retrieve(query: str, k: int = 5, signals: list[str] | None = None) -> list[dict[str, Any]]:
+    """Top-k knowledge chunks for `query`, optionally boosted toward chunks
+    tagged with any of `signals`. Never raises: retrieval failure → []."""
+    try:
+        if RAG_BACKEND == "embeddings":
+            from app.rag import dense
+
+            return dense.retrieve(query, k=k, signals=signals)
+        return _retrieve_lexical(query, k, signals)
+    except Exception as e:
+        print(f"[RAG] retrieve() error: {e}")
+        return []
 
 
 def known_source_ids() -> frozenset[str]:
@@ -87,57 +139,3 @@ def valid_citations(ids: list[Any] | None) -> list[str]:
     (LLMs sometimes 'cite' made-up labels)."""
     known = known_source_ids()
     return sorted({str(i) for i in (ids or []) if str(i) in known})
-
-
-def retrieve(query: str, k: int = 5, signals: list[str] | None = None) -> list[dict[str, Any]]:
-    """
-    Retrieve top-k chunks for a query. Optionally bias toward chunks whose
-    `signals` metadata contains any of the provided signals.
-    Returns: [{id, text, source, topic, score}, ...]
-    """
-    try:
-        col = get_collection()
-        if col.count() == 0:
-            return []
-
-        results = col.query(query_texts=[query], n_results=k)
-        ids = results.get("ids", [[]])[0]
-        docs = results.get("documents", [[]])[0]
-        metas = results.get("metadatas", [[]])[0]
-        dists = results.get("distances", [[]])[0]
-
-        chunks = []
-        for i, doc in enumerate(docs):
-            meta = metas[i] or {}
-            chunk_signals = (meta.get("signals") or "").split(",")
-            signal_boost = 0.0
-            if signals:
-                overlap = len(set(s.strip() for s in chunk_signals) & set(signals))
-                signal_boost = overlap * 0.05
-            # Chroma cosine distance: 0 = identical, 2 = opposite. Convert to similarity.
-            base_score = 1.0 - (dists[i] / 2.0)
-            chunks.append({
-                "id": ids[i],
-                "text": doc,
-                "source": meta.get("source", "Unknown"),
-                "topic": meta.get("topic", ""),
-                "score": round(base_score + signal_boost, 4),
-            })
-
-        chunks.sort(key=lambda c: c["score"], reverse=True)
-        return chunks
-    except Exception as e:
-        print(f"[RAG] retrieve() error: {e}")
-        return []
-
-
-def reset_collection():
-    """Drop and recreate the collection. Used by the ingest script."""
-    global _collection
-    client = get_client()
-    try:
-        client.delete_collection(_COLLECTION_NAME)
-    except Exception:
-        pass
-    _collection = None
-    return get_collection()

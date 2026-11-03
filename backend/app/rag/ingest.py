@@ -4,7 +4,7 @@ Run from backend/: python -m app.rag.ingest
 """
 
 from app.rag.corpus_data import CORPUS
-from app.rag.store import reset_collection
+from app.rag.dense import reset_collection
 
 
 def ingest():

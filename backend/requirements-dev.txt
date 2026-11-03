@@ -1,2 +1,6 @@
 -r requirements.txt
 pytest==9.1.1
+
+# Optional dense retrieval (RAG_BACKEND=embeddings). Not needed in production:
+# the default BM25 backend has no model and fits the 512 MB free tier.
+chromadb==1.5.9
