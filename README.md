@@ -11,6 +11,8 @@
 
 Upload a customer CSV. Get a defensible, evidence-cited retention playbook — not a hallucinated one.
 
+[![CI](https://github.com/ManasSaxena14/Churnly/actions/workflows/ci.yml/badge.svg)](https://github.com/ManasSaxena14/Churnly/actions/workflows/ci.yml)
+
 **[▶ Live demo — churnly-1.vercel.app](https://churnly-1.vercel.app)** · _first load may take ~30 s while the free server wakes up_
 
 <sub>Retention intelligence with receipts.</sub>

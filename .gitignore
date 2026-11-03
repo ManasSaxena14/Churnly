@@ -25,9 +25,12 @@ learn/
 # Dev test files
 test_upload.py
 test_*.py
+!backend/tests/test_*.py
 
 # Large raw datasets
 *.csv
+# …except the bundled sample dataset the site offers ("Use sample data")
+!frontend/public/churn_demo_300.csv
 !backend/data/
 # Local account database (users + sessions)
 backend/data/
