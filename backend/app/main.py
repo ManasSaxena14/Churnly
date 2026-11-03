@@ -126,6 +126,13 @@ def _check_job(job_id: str, user: dict | None) -> None:
         raise HTTPException(status_code=404, detail="Run not found")
 
 
+# Inngest is optional. It's active with the local dev server (INNGEST_DEV=1)
+# or Inngest Cloud (INNGEST_SIGNING_KEY); without either — e.g. a plain
+# Render deploy — its endpoint isn't mounted (the SDK refuses to start in
+# production mode without a signing key) and analyses run in-process.
+INNGEST_ENABLED = (os.getenv("INNGEST_DEV") or "").strip().lower() not in ("", "0", "false", "no") \
+    or bool(os.getenv("INNGEST_SIGNING_KEY"))
+
 # Create an Inngest client
 inngest_client = inngest.Inngest(
     app_id="churnly",
@@ -401,6 +408,8 @@ class _InlineStep:
 
 
 async def _inngest_reachable() -> bool:
+    if not INNGEST_ENABLED:
+        return False
     if os.getenv("INNGEST_EVENT_KEY"):
         return True
     import httpx
@@ -772,4 +781,5 @@ async def submit_hitl_response(job_id: str, body: Dict[str, Any] = Body(...), us
     return {"status": "ok"}
 
 
-inngest.fast_api.serve(app, inngest_client, [analyze_retention_job])
+if INNGEST_ENABLED:
+    inngest.fast_api.serve(app, inngest_client, [analyze_retention_job])
